@@ -85,7 +85,20 @@ def is_app_installed(app_id):
 
 # TODO: check for storage availability, allow user to chose sd card or internal
 def get_home_folder():
-    kolibri_home_file = get_activity().getExternalFilesDir(None)
+    kolibri_home_file = None
+
+    # Find the first removable device:
+    for external_file_dir in get_activity().getExternalFilesDirs(None):
+        state = Environment.getExternalStorageState(external_file_dir)
+        is_removable = Environment.isExternalStorageRemovable(external_file_dir)
+        if is_removable and state == "mounted":
+            kolibri_home_file = external_file_dir
+            break
+
+    # Fallback to internal storage:
+    if kolibri_home_file is None:
+        kolibri_home_file = get_activity().getExternalFilesDir(None)
+
     return os.path.join(kolibri_home_file.toString(), "KOLIBRI_DATA")
 
 
