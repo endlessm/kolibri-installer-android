@@ -20,11 +20,14 @@ NotificationManager = autoclass("android.app.NotificationManager")
 PackageManager = autoclass("android.content.pm.PackageManager")
 PendingIntent = autoclass("android.app.PendingIntent")
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
+Secure = autoclass("android.provider.Settings$Secure")
 Timezone = autoclass("java.util.TimeZone")
 Uri = autoclass("android.net.Uri")
 
 ANDROID_VERSION = autoclass("android.os.Build$VERSION")
 SDK_INT = ANDROID_VERSION.SDK_INT
+
+BAD_ANDROID_IDS = ("9774d56d682e549c",)
 
 
 def is_service_context():
@@ -41,6 +44,19 @@ def get_service():
 
 def get_timezone_name():
     return Timezone.getDefault().getDisplayName()
+
+
+def get_android_id():
+    android_id = Secure.getString(
+        get_activity().getContentResolver(), Secure.ANDROID_ID
+    )
+
+    # Don't use this if the retrieved id is falsy, too short, or a specific
+    # id that is known to be hardcoded in many devices.
+    if android_id is None or len(android_id) < 16 or android_id in BAD_ANDROID_IDS:
+        return None
+
+    return android_id
 
 
 def start_service(service_name, service_args=None):

@@ -1,10 +1,9 @@
 import os
+from mimetypes import init
 
-import initialization  # noqa: F401 keep this first, to ensure we're set up for other imports
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from kolibri.main import initialize
 from twisted.conch import manhole
 from twisted.conch import manhole_ssh
 from twisted.conch.ssh import keys
@@ -16,11 +15,15 @@ from twisted.internet import defer
 from twisted.internet import reactor
 from zope.interface import implementer
 
+from kolibri_android.android_utils import get_home_folder
+
+KOLIBRI_HOME = get_home_folder()
+
 
 def get_key_pair(refresh=False):
 
     # calculate paths where we'll store our SSH server keys
-    KEYPATH = os.path.join(os.environ.get("KOLIBRI_HOME", "."), "ssh_host_key")
+    KEYPATH = os.path.join(KOLIBRI_HOME, "ssh_host_key")
     PUBKEYPATH = KEYPATH + ".pub"
 
     # check whether we already have keys there, and use them if so
@@ -67,7 +70,7 @@ class KolibriSuperAdminCredentialsChecker(object):
 
         # if a temporary password was set over ADB, allow login with it
         TEMP_ADMIN_PASS_PATH = os.path.join(
-            os.environ.get("KOLIBRI_HOME", "."), "temp_admin_pass"
+            KOLIBRI_HOME, "temp_admin_pass"
         )
         if os.path.isfile(TEMP_ADMIN_PASS_PATH):
             with open(TEMP_ADMIN_PASS_PATH) as f:
@@ -90,6 +93,7 @@ class KolibriSuperAdminCredentialsChecker(object):
 
 
 def _get_manhole_factory(namespace):
+    from kolibri.main import initialize
 
     # ensure django has been set up so we can use the ORM etc in the shell
     initialize(skip_update=True)
@@ -115,3 +119,8 @@ def _get_manhole_factory(namespace):
 def launch_remoteshell(port=4242):
     reactor.listenTCP(port, _get_manhole_factory(globals()))
     reactor.run()
+
+
+class Application(object):
+    def run(self):
+        pass

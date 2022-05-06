@@ -11,8 +11,8 @@
 --permission WRITE_EXTERNAL_STORAGE
 --permission ACCESS_NETWORK_STATE
 --permission FOREGROUND_SERVICE
---service server:server.py
---service remoteshell:remoteshell.py
+--service server:kolibri_android/server/main.py
+--service remoteshell:kolibri_android/remoteshell/main.py
 --presplash assets/icon.png
 --presplash-color #FFFFFF
 --icon assets/icon.png
