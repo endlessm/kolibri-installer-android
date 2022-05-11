@@ -1,6 +1,7 @@
 import json
 import os
 import re
+from pathlib import Path
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -187,3 +188,58 @@ def get_signature_key_issuing_organization():
     signer = get_signature_key_issuer()
     orgs = re.findall(r"\bO=([^,]+)", signer)
     return orgs[0] if orgs else ""
+
+
+def is_app_path(path):
+    path = Path(path).resolve()
+    activity = get_activity()
+
+    app_dirs = [activity.getFilesDir()] + activity.getExternalFilesDirs(None)
+    for app_dir in app_dirs:
+        if app_dir is None:
+            continue
+        if path.is_relative_to(Path(app_dir.toString())):
+            return True
+    return False
+
+
+def monkeypatch_os_access():
+    from os import access as _os_access
+
+    def access(path, mode, *, dir_fd=None, effective_ids=False, follow_symlinks=True):
+        dir_write_access = (
+            dir_fd is None
+            and not effective_ids
+            and follow_symlinks
+            and mode & os.W_OK
+            and os.path.isdir(path)
+        )
+
+        if dir_write_access:
+            return is_app_path(path)
+
+        return _os_access(
+            path,
+            mode,
+            dir_fd=dir_fd,
+            effective_ids=effective_ids,
+            follow_symlinks=follow_symlinks,
+        )
+
+    os.access = access
+
+
+def monkeypatch_os_listdir():
+    from os import listdir as _os_listdir
+
+    def listdir(path=None):
+        if path is None:
+            path = "."
+
+        if isinstance(path, (str, bytes, os.PathLike)):
+            files = File(os.fspath(path)).list()
+            return files or []
+
+        return _os_listdir(path)
+
+    os.listdir = listdir

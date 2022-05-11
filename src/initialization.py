@@ -8,10 +8,15 @@ from android_utils import get_home_folder
 from android_utils import get_signature_key_issuing_organization
 from android_utils import get_timezone_name
 from android_utils import get_version_name
+from android_utils import monkeypatch_os_access
+from android_utils import monkeypatch_os_listdir
 from jnius import autoclass
 
 # initialize logging before loading any third-party modules, as they may cause logging to get configured.
 logging.basicConfig(level=logging.DEBUG)
+
+monkeypatch_os_access()
+monkeypatch_os_listdir()
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(script_dir)
