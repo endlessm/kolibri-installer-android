@@ -87,22 +87,22 @@ try:
 except FileNotFoundError:
     pass
 
-# we need to initialize Kolibri to allow us to access the app key
-initialize()
+# # we need to initialize Kolibri to allow us to access the app key
+# initialize()
 
-# start kolibri server
-logging.info("Starting kolibri server via Android service...")
-start_service("server")
+# # start kolibri server
+# logging.info("Starting kolibri server via Android service...")
+# start_service("server")
 
-# Tie up this thread until the server is running
-wait_for_status(STATUS_RUNNING, timeout=120)
+# # Tie up this thread until the server is running
+# wait_for_status(STATUS_RUNNING, timeout=120)
 
-_, port, _, _ = _read_pid_file(PID_FILE)
+# _, port, _, _ = _read_pid_file(PID_FILE)
 
-start_url = "http://127.0.0.1:{port}".format(port=port) + interface.get_initialize_url()
-loadUrl(start_url)
+# start_url = "http://127.0.0.1:{port}".format(port=port) + interface.get_initialize_url()
+# loadUrl(start_url)
 
-start_service("remoteshell")
+# start_service("remoteshell")
 
 while True:
     time.sleep(0.05)
