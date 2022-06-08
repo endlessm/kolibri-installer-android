@@ -56,10 +56,28 @@
       <img src="loading-animation.gif" />
       <h1 class="header">Starting Endless Key</h1>
       <p class="message">Please wait; this may take some time.</p>
+      <p class="message">Is online? <span id="mytest" /></p>
     </div>
     <div class="footer">
       <h5>Powered by Kolibri</h5>
       <img src="kolibri-icon.png" />
     </div>
+    <script>
+      function setOnlineLabel (online) {
+          const text = online ? "yes" : "no";
+          document.getElementById("mytest").textContent = text;
+      }
+
+      const online = navigator.onLine;
+      setOnlineLabel(online);
+
+      window.addEventListener('offline', function(e) {
+          setOnlineLabel(false);
+      });
+
+      window.addEventListener('online', function(e) {
+          setOnlineLabel(true);
+      });
+    </script>
   </body>
 </html>
