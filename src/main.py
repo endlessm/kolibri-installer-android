@@ -1,9 +1,12 @@
+import http.server
 import importlib
+import json
 import logging
 import os
 import time
 
 import initialization  # noqa: F401 keep this first, to ensure we're set up for other imports
+from android.runnable import run_on_ui_thread
 from android_utils import ask_all_files_access
 from android_utils import get_endless_key_paths
 from android_utils import provision_endless_key_database
@@ -87,22 +90,66 @@ try:
 except FileNotFoundError:
     pass
 
-# we need to initialize Kolibri to allow us to access the app key
-initialize()
 
-# start kolibri server
-logging.info("Starting kolibri server via Android service...")
-start_service("server")
+def start_kolibri():
+    # we need to initialize Kolibri to allow us to access the app key
+    initialize()
 
-# Tie up this thread until the server is running
-wait_for_status(STATUS_RUNNING, timeout=120)
+    # start kolibri server
+    logging.info("Starting kolibri server via Android service...")
+    start_service("server")
 
-_, port, _, _ = _read_pid_file(PID_FILE)
+    # Tie up this thread until the server is running
+    wait_for_status(STATUS_RUNNING, timeout=120)
 
-start_url = "http://127.0.0.1:{port}".format(port=port) + interface.get_initialize_url()
-loadUrl(start_url)
+    _, port, _, _ = _read_pid_file(PID_FILE)
 
-start_service("remoteshell")
+    start_url = (
+        "http://127.0.0.1:{port}".format(port=port) + interface.get_initialize_url()
+    )
+    loadUrl(start_url)
+
+    start_service("remoteshell")
+
+
+@run_on_ui_thread
+def hook():
+    PythonActivity.mWebView.setWebContentsDebuggingEnabled(True)
+    endlessAPI = """
+window.EndlessAPI = {
+    load: () => {
+        fetch('http://localhost:8000/load');
+    },
+
+    loadWithUSB: () => {
+        fetch('http://localhost:8000/loadWithUSB');
+    },
+};
+
+"""
+    PythonActivity.mWebView.evaluateJavascript(endlessAPI, None)
+    PythonActivity.mWebView.evaluateJavascript("show_welcome()", None)
+
+
+hook()
+
+
+class HandlerClass(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        logging.info(f"Starting kolibri backend with {self.path}")
+        start_kolibri()
+
+        self.send_response(200)
+        self.send_header("Content-type", "text/json")
+        self.end_headers()
+        httpd.shutdown()
+        self.wfile.write(json.dumps({}).encode())
+
+
+server_address = ("", 8000)
+httpd = http.server.HTTPServer(server_address, HandlerClass)
+httpd.serve_forever()
+
 
 while True:
     time.sleep(0.05)
