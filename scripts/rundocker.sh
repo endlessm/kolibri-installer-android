@@ -5,6 +5,7 @@ set -e
 SCRIPTDIR=$(realpath "$(dirname "$0")")
 SRCDIR=$(dirname "$SCRIPTDIR")
 DOCKER=${DOCKER:-"docker"}
+IS_ROOTLESS_PODMAN=${IS_ROOTLESS_PODMAN:-true}
 
 BUILD_CACHE_VOLUME=kolibri-android-cache
 BUILD_CACHE_PATH=/cache
@@ -23,10 +24,6 @@ RUN_OPTS=(
   --mount "type=bind,src=${SRCDIR},dst=${SRCDIR}"
   --workdir "${SRCDIR}"
 
-  # Run as the calling user and make the cache volume the user's home
-  # directory so all the intermediate build outputs (e.g.,
-  # ~/.local/share/python-for-android and ~/.gradle) are stored.
-  --user "${BUILD_UID}:${BUILD_GID}"
   --env HOME="${BUILD_CACHE_PATH}"
 
   # Pass through other environment variables.
@@ -36,6 +33,18 @@ RUN_OPTS=(
   --env P4A_RELEASE_KEYALIAS_PASSWD
   --env ARCHES
 )
+
+if [ "${DOCKER}" = "podman" ] && [ "${IS_ROOTLESS_PODMAN}" = true ]; then
+    # Is rootless podman, nothing to do.
+    :
+    else
+    RUN_OPTS+=(
+        # Run as the calling user and make the cache volume the user's home
+        # directory so all the intermediate build outputs (e.g.,
+        # ~/.local/share/python-for-android and ~/.gradle) are stored.
+        --user "${BUILD_UID}:${BUILD_GID}"
+    )
+fi
 
 # If the release signing key has been specified and exists, ensure the
 # path is absolute and bind mount it readonly into the container.
