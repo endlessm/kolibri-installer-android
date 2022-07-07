@@ -119,7 +119,30 @@ def get_home_folder():
     return os.path.join(kolibri_home_file.toString(), "KOLIBRI_DATA")
 
 
-def get_endless_key_paths():
+def get_endless_key_removable_app_paths():
+    for external_file_dir in get_activity().getExternalFilesDirs(None):
+        if external_file_dir is None:
+            continue
+        state = Environment.getExternalStorageState(external_file_dir)
+        is_removable = Environment.isExternalStorageRemovable(external_file_dir)
+        directory_path = external_file_dir.toString()
+        logger.debug(
+            f"Found app storage directory: {directory_path} state: {state} "
+            f"is removable: {is_removable}"
+        )
+        if is_removable and state == "mounted":
+            kolibri_data_path = os.path.join(directory_path, "KOLIBRI_DATA")
+            content_path = os.path.join(kolibri_data_path, "content")
+            db_path = os.path.join(
+                kolibri_data_path, "preseeded_kolibri_home", "db.sqlite3"
+            )
+            if os.path.exists(content_path) and os.path.exists(db_path):
+                return {"content_path": content_path, "db_path": db_path}
+
+    return None
+
+
+def get_endless_key_removable_root_paths():
     def _get_directory_path(volume):
         if SDK_INT < 30:
             uuid = volume.getUuid()
@@ -151,7 +174,21 @@ def get_endless_key_paths():
             )
             if os.path.exists(content_path) and os.path.exists(db_path):
                 return {"content_path": content_path, "db_path": db_path}
+
     return None
+
+
+def get_endless_key_paths():
+    # First look for KOLIBRI_DATA in the app private directories on
+    # removable storage.
+    paths = get_endless_key_removable_app_paths()
+
+    if not paths:
+        # Otherwise, look for it in the root of the removable storage
+        # volumes.
+        paths = get_endless_key_removable_root_paths()
+
+    return paths
 
 
 def provision_endless_key_database(endless_key_paths):
