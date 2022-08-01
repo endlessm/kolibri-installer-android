@@ -21,6 +21,7 @@ RUN dpkg --add-architecture i386 && \
     libssl-dev \
     libstdc++6:i386 \
     libtool \
+    lld \
     locales \
     lsb-release \
     openjdk-8-jdk \
