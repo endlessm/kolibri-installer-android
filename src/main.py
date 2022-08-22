@@ -2,6 +2,7 @@ import importlib
 import logging
 import os
 import time
+from urllib.parse import urljoin
 
 import initialization  # noqa: F401 keep this first, to ensure we're set up for other imports
 from android_utils import choose_endless_key_uris
@@ -10,20 +11,21 @@ from android_utils import PermissionsCancelledError
 from android_utils import PermissionsWrongFolderError
 from android_utils import provision_endless_key_database
 from android_utils import set_endless_key_uris
+from android_utils import share_by_intent
 from android_utils import start_service
 from android_utils import StartupState
 from android_utils import stat_file
 from jnius import autoclass
+from kolibri.dist.magicbus.plugins import SimplePlugin
 from kolibri.plugins import config as plugins_config
 from kolibri.plugins.app.utils import interface
 from kolibri.plugins.registry import registered_plugins
 from kolibri.plugins.utils import disable_plugin
 from kolibri.plugins.utils import enable_plugin
 from kolibri.utils.cli import initialize
-from kolibri.utils.server import _read_pid_file
+from kolibri.utils.conf import KOLIBRI_HOME
+from kolibri.utils.server import KolibriProcessBus
 from kolibri.utils.server import PID_FILE
-from kolibri.utils.server import STATUS_RUNNING
-from kolibri.utils.server import wait_for_status
 from runnable import Runnable
 
 # These Kolibri plugins conflict with the plugins listed in REQUIRED_PLUGINS
@@ -190,24 +192,46 @@ def start_kolibri_with_usb():
 
 
 def start_kolibri():
+    start_service("remoteshell")
+
+    logging.info("Starting kolibri server...")
+
     # we need to initialize Kolibri to allow us to access the app key
     initialize()
 
-    # start kolibri server
-    logging.info("Starting kolibri server via Android service...")
-    start_service("server")
-
-    # Tie up this thread until the server is running
-    wait_for_status(STATUS_RUNNING, timeout=120)
-
-    _, port, _, _ = _read_pid_file(PID_FILE)
-
-    start_url = (
-        "http://127.0.0.1:{port}".format(port=port) + interface.get_initialize_url()
+    kolibri_bus = KolibriProcessBus(
+        port=0,
+        zip_port=0,
+        background=False,
     )
-    loadUrl(start_url)
 
-    start_service("remoteshell")
+    kolibri_android_plugin = _KolibriAndroidPlugin(kolibri_bus)
+    kolibri_android_plugin.subscribe()
+
+    # register app capabilities
+    interface.register(share_file=share_by_intent)
+
+    logging.info("Home folder: {}".format(KOLIBRI_HOME))
+    logging.info("Timezone: {}".format(os.environ.get("TZ", "(default)")))
+
+    kolibri_bus.run()
+
+
+class _KolibriAndroidPlugin(SimplePlugin):
+    def __init__(self, bus):
+        self.bus = bus
+        self.bus.subscribe("SERVING", self.SERVING)
+
+    def SERVING(self, port):
+        from kolibri.plugins.app.utils import interface
+        from kolibri.utils.server import get_urls
+
+        _, base_urls = get_urls(listen_port=port)
+        base_url = base_urls[0]
+        initialize_url = interface.get_initialize_url()
+
+        start_url = urljoin(base_url, initialize_url)
+        loadUrl(start_url)
 
 
 while True:
