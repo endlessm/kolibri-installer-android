@@ -231,6 +231,9 @@ class _KolibriAndroidPlugin(SimplePlugin):
         initialize_url = interface.get_initialize_url()
 
         start_url = urljoin(base_url, initialize_url)
+        # Ugly hack to redirect straight to the explore plugin
+        # In the future, Kolibri should do this itself.
+        start_url += "?next=/explore"
         loadUrl(start_url)
 
 
