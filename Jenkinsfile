@@ -8,8 +8,7 @@ pipeline {
             // mounted and set to the current workdir. What we need is
             // to mount the cache volume at the expected location and
             // set HOME to that path.
-            args '--mount type=volume,src=kolibri-android-cache,dst=/cache ' +
-                '--env HOME=/cache'
+            args '--volume "$WORKSPACE/.cache:/cache" --env HOME=/cache'
 
             // Try to use the same node to make use of caching.
             reuseNode true
