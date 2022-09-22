@@ -3,13 +3,6 @@
 pipeline {
     agent {
         dockerfile {
-            // We're trying to recreate what rundocker.sh does. Jenkins
-            // will already run as the Jenkins user with the checkout
-            // mounted and set to the current workdir. What we need is
-            // to mount the cache volume at the expected location and
-            // set HOME to that path.
-            args '--volume "$WORKSPACE/.cache:/cache" --env HOME=/cache'
-
             // Try to use the same node to make use of caching.
             reuseNode true
         }
@@ -22,6 +15,10 @@ pipeline {
 
         // Make p4a always rebuild the distribution to avoid caching issues.
         P4A_OPTIONS = '--force-build'
+
+        // Both p4a and gradle cache outputs in the home directory.
+        // Point it inside the workspace.
+        HOME = "$WORKSPACE/_cache"
     }
 
 
