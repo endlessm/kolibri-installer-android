@@ -19,6 +19,9 @@ pipeline {
         // URL for the Kolibri wheel to include.
         // FIXME: It would be nice to cache this somehow.
         KOLIBRI_WHL_URL = 'https://github.com/learningequality/kolibri/releases/download/v0.15.1/kolibri-0.15.1-py2.py3-none-any.whl'
+
+        // Make p4a always rebuild the distribution to avoid caching issues.
+        P4A_OPTIONS = '--force-build'
     }
 
 
