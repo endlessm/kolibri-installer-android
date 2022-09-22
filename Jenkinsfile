@@ -3,14 +3,6 @@
 pipeline {
     agent {
         dockerfile {
-            // We're trying to recreate what rundocker.sh does. Jenkins
-            // will already run as the Jenkins user with the checkout
-            // mounted and set to the current workdir. What we need is
-            // to mount the cache volume at the expected location and
-            // set HOME to that path.
-            args '--mount type=volume,src=kolibri-android-cache,dst=/cache ' +
-                '--env HOME=/cache'
-
             // Try to use the same node to make use of caching.
             reuseNode true
         }
@@ -20,6 +12,13 @@ pipeline {
         // URL for the Kolibri wheel to include.
         // FIXME: It would be nice to cache this somehow.
         KOLIBRI_WHL_URL = 'https://github.com/learningequality/kolibri/releases/download/v0.15.1/kolibri-0.15.1-py2.py3-none-any.whl'
+
+        // Make p4a always rebuild the distribution to avoid caching issues.
+        P4A_OPTIONS = '--force-build'
+
+        // Both p4a and gradle cache outputs in the home directory.
+        // Point it inside the workspace.
+        HOME = "$WORKSPACE/_cache"
     }
 
 

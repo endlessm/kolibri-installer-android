@@ -154,7 +154,7 @@ assets/loadingScreen: clean-loadingScreen
 
 .PHONY: p4a_android_distro
 p4a_android_distro: needs-android-dirs
-	$(P4A) create $(ARCH_OPTIONS)
+	$(P4A) create $(ARCH_OPTIONS) $(P4A_OPTIONS)
 
 .PHONY: needs-version
 needs-version: src/kolibri
@@ -170,7 +170,7 @@ kolibri.apk: p4a_android_distro src/kolibri src/apps-bundle src/collections asse
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE_PASSWD
 	$(MAKE) guard-P4A_RELEASE_KEYALIAS_PASSWD
 	@echo "--- :android: Build APK"
-	$(P4A) apk --release --sign $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(BUILD_NUMBER)
+	$(P4A) apk --release --sign $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(BUILD_NUMBER) $(P4A_OPTIONS)
 	mkdir -p dist
 	mv kolibri-release-$(APK_VERSION)-.apk dist/kolibri-release-$(APK_VERSION).apk
 
@@ -179,7 +179,7 @@ kolibri.apk: p4a_android_distro src/kolibri src/apps-bundle src/collections asse
 # For some reason, p4a defauls to adding a final '-' to the filename, so we remove it in the final step.
 kolibri.apk.unsigned: p4a_android_distro src/kolibri src/apps-bundle src/collections assets/loadingScreen needs-version
 	@echo "--- :android: Build APK (unsigned)"
-	$(P4A) apk $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(BUILD_NUMBER)
+	$(P4A) apk $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(BUILD_NUMBER) $(P4A_OPTIONS)
 	mkdir -p dist
 	mv kolibri-debug-$(APK_VERSION)-.apk dist/kolibri-debug-$(APK_VERSION).apk
 
@@ -192,7 +192,7 @@ kolibri.aab: p4a_android_distro src/kolibri src/apps-bundle src/collections asse
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE_PASSWD
 	$(MAKE) guard-P4A_RELEASE_KEYALIAS_PASSWD
 	@echo "--- :android: Build AAB"
-	$(P4A) aab --release --sign $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(BUILD_NUMBER)
+	$(P4A) aab --release --sign $(ARCH_OPTIONS) --version=$(APK_VERSION) --numeric-version=$(BUILD_NUMBER) $(P4A_OPTIONS)
 	mkdir -p dist
 	mv kolibri-release-$(APK_VERSION)-.aab dist/kolibri-release-$(APK_VERSION).aab
 
