@@ -1,11 +1,14 @@
 import importlib
 import logging
 import time
+from urllib.parse import urljoin
+from urllib.parse import urlparse
 
 import initialization  # noqa: F401 keep this first, to ensure we're set up for other imports
 from android.activity import register_activity_lifecycle_callbacks
 from android_utils import choose_endless_key_uris
 from android_utils import get_endless_key_uris
+from android_utils import get_preferences
 from android_utils import has_any_external_storage_device
 from android_utils import PermissionsCancelledError
 from android_utils import PermissionsWrongFolderError
@@ -22,6 +25,7 @@ from kolibri.plugins import config as plugins_config
 from kolibri.plugins.app.utils import interface
 from kolibri.utils.cli import initialize
 from kolibri.utils.server import BaseKolibriProcessBus
+from kolibri.utils.server import get_urls
 from kolibri.utils.server import KolibriServerPlugin
 from kolibri.utils.server import ZeroConfPlugin
 from kolibri.utils.server import ZipContentServerPlugin
@@ -168,8 +172,34 @@ def on_activity_resumed(activity):
     logging.info("onActivityResumed")
 
 
+def is_server_url(url):
+    _, server_urls = get_urls()
+    if not server_urls:
+        return False
+
+    url_parts = urlparse(url)
+    for server_url in server_urls:
+        server_url_parts = urlparse(server_url)
+        if (
+            url_parts.scheme == server_url_parts.scheme
+            and url_parts.netloc == server_url_parts.netloc
+        ):
+            return True
+
+    return False
+
+
 def on_activity_stopped(activity):
     logging.info("onActivityStopped")
+    url = PythonActivity.mWebView.getUrl()
+    logging.info(f"Current URL: {url}")
+    if is_server_url(url):
+        url_parts = urlparse(url)
+        current_url = url_parts._replace(scheme="", netloc="").geturl()
+        logging.info(f"Saving current URL {current_url}")
+        editor = get_preferences().edit()
+        editor.putString("current_url", current_url)
+        editor.commit()
 
 
 def on_activity_destroyed(activity):
@@ -205,9 +235,17 @@ class AppPlugin(SimplePlugin):
         self.bus.subscribe("SERVING", self.SERVING)
 
     def SERVING(self, port):
-        start_url = (
-            "http://127.0.0.1:{port}".format(port=port) + interface.get_initialize_url()
+        base_url = "http://127.0.0.1:{port}".format(port=port)
+
+        # See if there's a URL to restore.
+        preferences = get_preferences()
+        next_url = preferences.getString("current_url", None)
+
+        start_url = urljoin(
+            base_url,
+            interface.get_initialize_url(next_url=next_url),
         )
+        logging.info(f"Loading URL {start_url}")
         loadUrl(start_url)
         start_service("workers")
 
