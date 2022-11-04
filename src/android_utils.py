@@ -42,6 +42,7 @@ PackageManager = autoclass("android.content.pm.PackageManager")
 PendingIntent = autoclass("android.app.PendingIntent")
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
 Settings = autoclass("android.provider.Settings")
+StatFs = autoclass("android.os.StatFs")
 Timezone = autoclass("java.util.TimeZone")
 Toast = autoclass("android.widget.Toast")
 Uri = autoclass("android.net.Uri")
@@ -148,6 +149,10 @@ def is_app_installed(app_id):
 # TODO: check for storage availability, allow user to chose sd card or internal
 def get_home_folder():
     kolibri_home_file = get_activity().getExternalFilesDir(None)
+    kolibri_home_path = kolibri_home_file.getPath()
+    print(f"MANUQ - kolibri_home_path {kolibri_home_path}")
+    available_bytes = StatFs(kolibri_home_path).getAvailableBytes()
+    print(f"MANUQ - available_bytes {available_bytes}")
     return os.path.join(kolibri_home_file.toString(), "KOLIBRI_DATA")
 
 
