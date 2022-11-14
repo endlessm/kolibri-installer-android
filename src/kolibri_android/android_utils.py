@@ -22,7 +22,8 @@ from jnius import autoclass
 from jnius import cast
 from jnius import JavaException
 from jnius import jnius
-from runnable import Runnable
+
+from .runnable import Runnable
 
 
 logger = logging.getLogger(__name__)
@@ -41,6 +42,8 @@ NotificationManager = autoclass("android.app.NotificationManager")
 PackageManager = autoclass("android.content.pm.PackageManager")
 PendingIntent = autoclass("android.app.PendingIntent")
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
+Secure = autoclass("android.provider.Settings$Secure")
+Settings = autoclass("android.provider.Settings")
 Timezone = autoclass("java.util.TimeZone")
 Toast = autoclass("android.widget.Toast")
 Uri = autoclass("android.net.Uri")
@@ -104,6 +107,10 @@ def get_timezone_name():
     return Timezone.getDefault().getDisplayName()
 
 
+def get_android_node_id():
+    return Secure.getString(get_activity().getContentResolver(), Secure.ANDROID_ID)
+
+
 def start_service(service_name, service_args=None):
     service_args = service_args or {}
     service = autoclass("org.endlessos.Key.Service{}".format(service_name.title()))
@@ -154,6 +161,8 @@ def is_app_installed(app_id):
 # TODO: check for storage availability, allow user to chose sd card or internal
 def get_home_folder():
     kolibri_home_file = get_activity().getExternalFilesDir(None)
+    if not kolibri_home_file:
+        return None
     return os.path.join(kolibri_home_file.toString(), "KOLIBRI_DATA")
 
 
