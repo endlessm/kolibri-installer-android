@@ -109,6 +109,7 @@ src/kolibri: clean
 	sed -i 's/if name.endswith(".py"):/if name.endswith(".py") or name.endswith(".pyc"):/g' src/kolibri/dist/django/db/migrations/loader.py
 	# Apply kolibri patches
 	patch -d src/ -p1 < patches/0001-Add-track-progress-information-to-channelimport.patch
+	patch -d src/ -p1 < patches/0001-WIP-Add-more-logging-in-channel_import.patch
 
 .PHONY: apps-bundle.zip
 apps-bundle.zip:

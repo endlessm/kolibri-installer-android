@@ -1,0 +1,50 @@
+From f812f6e11517337f7724a77ce745efe87cf53e4c Mon Sep 17 00:00:00 2001
+From: Dylan McCall <dylan@endlessos.org>
+Date: Wed, 16 Nov 2022 13:49:03 -0800
+Subject: [PATCH] WIP: Add more logging in channel_import
+
+---
+ kolibri/core/content/utils/channel_import.py | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/kolibri/core/content/utils/channel_import.py b/kolibri/core/content/utils/channel_import.py
+index f61e843482..23cc652b15 100644
+--- a/kolibri/core/content/utils/channel_import.py
++++ b/kolibri/core/content/utils/channel_import.py
+@@ -655,11 +655,15 @@ class ChannelImport(object):
+         # keep track of which model is currently being imported
+         self.current_model_being_imported = model
+ 
++        logger.info("ChannelImport table_import: {}".format(model.__name__))
++
+         if self.destination.engine.name == "postgresql":
+             result = self.postgres_table_import(model, row_mapper, table_mapper)
+         elif self.can_use_sqlite_attach_method(model, table_mapper):
++            logger.info("ChannelImport using raw_attached_sqlite_table_import")
+             result = self.raw_attached_sqlite_table_import(model, table_mapper)
+         else:
++            logger.warning("ChannelImport using sqlite_table_import")
+             result = self.sqlite_table_import(model, row_mapper, table_mapper)
+ 
+         self.current_model_being_imported = None
+@@ -845,6 +849,7 @@ class ChannelImport(object):
+     def try_attaching_sqlite_database(self):
+         # attach the external content database to our primary database so we can directly transfer records en masse
+         if self.destination.engine.name == "sqlite":
++            logger.info("ChannelImport attached sqlite db")
+             try:
+                 self.destination.execute(
+                     text(
+@@ -852,7 +857,8 @@ class ChannelImport(object):
+                     )
+                 )
+                 self._sqlite_db_attached = True
+-            except OperationalError:
++            except OperationalError as error:
++                logger.warning("ChannelImport failed to attach sqlite db: {}".format(error))
+                 # silently ignore if we were unable to attach the database; we'll just fall back to other methods
+                 pass
+ 
+-- 
+2.38.1
+
