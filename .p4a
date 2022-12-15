@@ -33,3 +33,4 @@
 --depend com.google.firebase:firebase-crashlytics-ndk:18.3.2
 --depend com.google.firebase:firebase-analytics:21.2.0
 --with-debug-symbols
+--enable-crashlytics-native-symbol-upload
