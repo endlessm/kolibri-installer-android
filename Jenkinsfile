@@ -73,7 +73,7 @@ pipeline {
                          "P4A_RELEASE_KEYALIAS_PASSWD=$P4A_RELEASE_KEYSTORE_PASSWD"]
                     ) {
                         sh 'make kolibri.aab'
-                        archiveArtifacts artifacts: 'dist/*.aab'
+                        archiveArtifacts artifacts: 'dist/*.aab, dist/native-debug-symbols-*.zip'
                     }
                 }
             }

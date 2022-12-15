@@ -32,7 +32,7 @@ properties. For example:</p>
                 copyArtifacts(
                     projectName: 'kolibri-installer-android',
                     selector: lastSuccessful(),
-                    filter: 'dist/kolibri-release-*.aab, dist/version.json',
+                    filter: 'dist/kolibri-release-*.aab, dist/native-debug-symbols-*.zip, dist/version.json',
                     fingerprintArtifacts: true,
                 )
             }
@@ -49,16 +49,23 @@ properties. For example:</p>
                     }
 
                     // Make sure there's only a single AAB file.
-                    def pattern = 'dist/kolibri-release-*.aab'
-                    def numFiles = findFiles(glob: pattern).size()
-                    if (numFiles != 1) {
-                        error("${pattern} matched ${numFiles} files")
+                    def aabFilesPattern = 'dist/kolibri-release-*.aab'
+                    def numAABFiles = findFiles(glob: aabFilesPattern).size()
+                    if (numAABFiles != 1) {
+                        error("${aabFilesPattern} matched ${numAABFiles} files")
+                    }
+
+                    def debugSymbolFilesPattern = 'dist/native-debug-symbols-*.zip'
+                    def numDebugSymbolFiles = findFiles(glob: debugSymbolFilesPattern).size()
+                    if (numDebugSymbolFiles != 1) {
+                        error("${debugSymbolFilesPattern} matched ${numDebugSymbolFiles} files")
                     }
 
                     def releaseNotes = readJSON(text: params.RELEASE_NOTES)
                     androidApkUpload(
                         googleCredentialsId: 'google-play-account',
-                        filesPattern: pattern,
+                        filesPattern: aabFilesPattern,
+                        nativeDebugSymbolFilesPattern: debugSymbolFilesPattern,
                         trackName: 'internal',
                         recentChangeList: releaseNotes,
                         rolloutPercentage: '100',
