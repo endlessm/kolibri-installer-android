@@ -11,8 +11,6 @@ def main():
     selftest_runner = unittest.runner.TextTestRunner()
     selftest_runner.run(selftests)
 
-    selftest_suite = unittest.TestSuite()
-
 
 if __name__ == "__main__":
     main()
