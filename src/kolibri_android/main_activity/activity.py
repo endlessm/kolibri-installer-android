@@ -1,11 +1,12 @@
 import logging
 import time
 
-from jnius import autoclass
-
 from ..android_utils import choose_endless_key_uris
+from ..android_utils import configure_webview
+from ..android_utils import evaluate_javascript
 from ..android_utils import get_endless_key_uris
 from ..android_utils import has_any_external_storage_device
+from ..android_utils import load_url_in_webview
 from ..android_utils import PermissionsCancelledError
 from ..android_utils import PermissionsWrongFolderError
 from ..android_utils import provision_endless_key_database
@@ -15,30 +16,6 @@ from ..android_utils import StartupState
 from ..android_utils import stat_file
 from ..application import BaseActivity
 from ..kolibri_utils import init_kolibri
-from ..runnable import Runnable
-
-
-PythonActivity = autoclass("org.kivy.android.PythonActivity")
-FullScreen = autoclass("org.learningequality.FullScreen")
-
-
-@Runnable
-def configure_webview(
-    activity, load_runnable, load_with_usb_runnable, loading_ready_runnable
-):
-    FullScreen.configureWebview(
-        activity, load_runnable, load_with_usb_runnable, loading_ready_runnable
-    )
-
-
-@Runnable
-def load_url_in_webview(url):
-    PythonActivity.mWebView.loadUrl(url)
-
-
-@Runnable
-def evaluate_javascript(js_code):
-    PythonActivity.mWebView.evaluateJavascript(js_code, None)
 
 
 def is_endless_key_reachable():
@@ -88,10 +65,9 @@ class MainActivity(BaseActivity):
         super().__init__()
 
         configure_webview(
-            PythonActivity.mActivity,
-            Runnable(self._on_load),
-            Runnable(self._on_load_with_usb),
-            Runnable(self._on_loading_ready),
+            self._on_load,
+            self._on_load_with_usb,
+            self._on_loading_ready,
         )
 
     def on_activity_stopped(self, activity):

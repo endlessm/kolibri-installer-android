@@ -36,6 +36,7 @@ DocumentsContract = autoclass("android.provider.DocumentsContract")
 Environment = autoclass("android.os.Environment")
 File = autoclass("java.io.File")
 FileProvider = autoclass("androidx.core.content.FileProvider")
+FullScreen = autoclass("org.learningequality.FullScreen")
 Intent = autoclass("android.content.Intent")
 NotificationBuilder = autoclass("android.app.Notification$Builder")
 NotificationManager = autoclass("android.app.NotificationManager")
@@ -814,6 +815,26 @@ def _android11_ext_storage_workarounds():
 
 def apply_android_workarounds():
     _android11_ext_storage_workarounds()
+
+
+@Runnable
+def configure_webview(load_fn, load_with_usb_fn, loading_ready_fn):
+    FullScreen.configureWebview(
+        PythonActivity.mActivity,
+        Runnable(load_fn),
+        Runnable(load_with_usb_fn),
+        Runnable(loading_ready_fn),
+    )
+
+
+@Runnable
+def load_url_in_webview(url):
+    PythonActivity.mWebView.loadUrl(url)
+
+
+@Runnable
+def evaluate_javascript(js_code):
+    PythonActivity.mWebView.evaluateJavascript(js_code, None)
 
 
 class StartupState(Enum):

@@ -154,14 +154,20 @@ dist/version.json: needs-version
 	mkdir -p dist
 	echo '{"versionCode": "$(VERSION_CODE)", "versionName": "$(VERSION_NAME)", "ekVersion": "$(EK_VERSION)"}' > $@
 
-DIST_DEPS = \
-	p4a_android_distro \
+BUILD_DEPS = \
 	src/kolibri \
 	src/apps-bundle \
 	src/collections \
 	assets/welcomeScreen \
 	needs-version \
 	dist/version.json
+
+DIST_DEPS = \
+	p4a_android_distro \
+	$(BUILD_DEPS)
+
+check: $(BUILD_DEPS)
+	python3 -m unittest discover kolibri_android.tests -t src
 
 .PHONY: kolibri.apk
 # Build the signed version of the apk
