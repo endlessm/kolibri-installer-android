@@ -139,7 +139,11 @@ class MainActivity(BaseActivity):
         else:
             last_kolibri_path = None
 
-        logging.info(f"Saving last Kolibri path '{last_kolibri_path}'")
+        if last_kolibri_path is None:
+            logging.info("Removing last Kolibri path")
+        else:
+            logging.info(f"Saving last Kolibri path '{last_kolibri_path}'")
+
         editor = get_preferences().edit()
         editor.putString("last_kolibri_path", last_kolibri_path)
         editor.commit()
