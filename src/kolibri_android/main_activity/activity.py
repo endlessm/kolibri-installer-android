@@ -100,11 +100,17 @@ class MainActivity(BaseActivity):
 
     def on_activity_stopped(self, activity):
         super().on_activity_stopped(activity)
+
+        self.show_loading_screen()
+
         if self._kolibri_bus is not None:
             self._kolibri_bus.transition("STOP")
 
     def on_activity_resumed(self, activity):
         super().on_activity_resumed(activity)
+
+        self.show_loading_screen()
+
         if self._kolibri_bus is not None:
             self._kolibri_bus.transition("RUN")
 
