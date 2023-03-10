@@ -25,18 +25,13 @@ FullScreen = autoclass("org.learningequality.FullScreen")
 
 @Runnable
 def configure_webview(*args):
-    FullScreen.configureWebview(*args)
+    FullScreen.initialize(PythonActivity.mActivity)
+    FullScreen.getInstance().configure(*args)
 
 
 @Runnable
 def replace_url_in_webview(url):
-    # Navigate to the first item in the history stack
-    current_index = PythonActivity.mWebView.copyBackForwardList().getCurrentIndex()
-    if current_index > 0:
-        PythonActivity.mWebView.goBackOrForward(-current_index)
-
-    # Now navigate to the target URL, replacing the remaining history items
-    PythonActivity.mWebView.loadUrl(url)
+    FullScreen.getInstance().replaceUrl(url)
 
 
 @Runnable
@@ -92,7 +87,6 @@ class MainActivity(BaseActivity):
         super().__init__()
 
         configure_webview(
-            PythonActivity.mActivity,
             Runnable(self._on_start_with_network),
             Runnable(self._on_start_with_usb),
             Runnable(self._on_loading_ready),
