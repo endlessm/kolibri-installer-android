@@ -16,7 +16,8 @@ class KolibriAppProcessBus(BaseKolibriProcessBus):
     def __init__(self, *args, enable_zeroconf=True, **kwargs):
         super(KolibriAppProcessBus, self).__init__(*args, **kwargs)
 
-        ServicesPlugin(self).subscribe()
+        self._services = ServicesPlugin(self)
+        self._services.subscribe()
 
         if enable_zeroconf:
             ZeroConfPlugin(self, self.port).subscribe()
@@ -48,6 +49,12 @@ class KolibriAppProcessBus(BaseKolibriProcessBus):
                 return True
 
         return False
+
+    def stop_services(self):
+        self._services.STOP()
+
+    def start_services(self):
+        self._services.START()
 
     def can_transition(self, to_state: str) -> bool:
         return (self.state, to_state) in self.transitions
