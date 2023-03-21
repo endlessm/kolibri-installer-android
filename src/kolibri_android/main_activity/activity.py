@@ -104,7 +104,7 @@ class MainActivity(BaseActivity):
             # run after thsi one, so we need to keep track of the webview's
             # URL before switching to the loading screen.
             self._last_kolibri_path = self._get_current_kolibri_path()
-            self._kolibri_bus.transition("IDLE")
+            self._kolibri_bus.stop_services()
         elif self._kolibri_bus.state != "IDLE":
             logging.warning(
                 f"Kolibri is unable to stop because its state is '{self._kolibri_bus.state}"
@@ -116,7 +116,9 @@ class MainActivity(BaseActivity):
         if self._kolibri_bus is None:
             return
 
-        if self._kolibri_bus.can_transition("START"):
+        if self._kolibri_bus.state == "START":
+            self._kolibri_bus.start_services()
+        elif self._kolibri_bus.can_transition("START"):
             self._last_kolibri_path = None
             self._kolibri_bus.transition("START")
         elif self._kolibri_bus.state != "START":

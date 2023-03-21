@@ -12,11 +12,37 @@ from kolibri.utils.server import ZipContentServerPlugin
 from magicbus.plugins import SimplePlugin
 
 
+class PausableServicesPlugin(ServicesPlugin):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._started = False
+        self._stopped = False
+
+    def START(self):
+        if not self._started:
+            logging.debug("PausableServicesPlugin full start'")
+            super().START()
+            self._started = True
+        elif self._stopped:
+            logging.debug("PausableServicesPlugin partial start'")
+            from kolibri.core.tasks.main import initialize_workers
+
+            self.worker = initialize_workers()
+            self._stopped = False
+        else:
+            logging.debug("PausableServicesPlugin skip start'")
+
+    def STOP(self):
+        super().STOP()
+        self._stopped = True
+
+
 class KolibriAppProcessBus(BaseKolibriProcessBus):
     def __init__(self, *args, enable_zeroconf=True, **kwargs):
         super(KolibriAppProcessBus, self).__init__(*args, **kwargs)
 
-        ServicesPlugin(self).subscribe()
+        self._services = PausableServicesPlugin(self)
+        self._services.subscribe()
 
         if enable_zeroconf:
             ZeroConfPlugin(self, self.port).subscribe()
@@ -48,6 +74,12 @@ class KolibriAppProcessBus(BaseKolibriProcessBus):
                 return True
 
         return False
+
+    def stop_services(self):
+        self._services.STOP()
+
+    def start_services(self):
+        self._services.START()
 
     def can_transition(self, to_state: str) -> bool:
         return (self.state, to_state) in self.transitions
