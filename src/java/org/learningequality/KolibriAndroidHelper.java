@@ -76,8 +76,6 @@ public class KolibriAndroidHelper {
     public void configure(final Runnable startWithNetwork, final Runnable startWithUSB, final Runnable loadingReady) {
         Log.i(TAG, "KolibriAndroidHelper configure");
 
-        mMainWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-
         mLoadingWebView.setWebViewClient(new WebViewClient() {
             private boolean mInWelcome = false;
 
@@ -150,6 +148,9 @@ public class KolibriAndroidHelper {
         mMainWebView.setWebChromeClient(mChrome);
 
         mMainWebView.getSettings().setAllowFileAccess(true);
+        mMainWebView.getSettings().setDatabaseEnabled(true);
+
+        mMainWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
     }
 
     private class MyChrome extends WebChromeClient {
