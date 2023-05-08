@@ -42,8 +42,6 @@ def init_kolibri(**kwargs):
     _update_kolibri_content_fallback_dirs()
     _update_explore_plugin_options()
 
-    _monkeypatch_whitenoise()
-
     for plugin_name in DISABLED_PLUGINS:
         _kolibri_disable_plugin(plugin_name)
 
@@ -120,13 +118,6 @@ def _update_kolibri_content_fallback_dirs():
 
     logger.info("Setting KOLIBRI_CONTENT_FALLBACK_DIRS to %s", content_fallback_dirs)
     os.environ["KOLIBRI_CONTENT_FALLBACK_DIRS"] = content_fallback_dirs
-
-
-def _monkeypatch_whitenoise():
-    from kolibri.utils import kolibri_whitenoise
-
-    logger.info("Applying DynamicWhiteNoise workarounds")
-    kolibri_whitenoise.DynamicWhiteNoise = AndroidDynamicWhiteNoise
 
 
 def _kolibri_initialize(**kwargs):

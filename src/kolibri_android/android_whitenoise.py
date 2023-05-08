@@ -3,11 +3,11 @@ import stat
 from urllib.parse import urlparse
 
 from django.utils.functional import cached_property
-from evil_kolibri.utils.kolibri_whitenoise import compressed_file_extensions
-from evil_kolibri.utils.kolibri_whitenoise import DynamicWhiteNoise
-from evil_kolibri.utils.kolibri_whitenoise import EndRangeStaticFile
-from evil_kolibri.utils.kolibri_whitenoise import FileFinder
 from jnius import autoclass
+from kolibri.utils.kolibri_whitenoise import compressed_file_extensions
+from kolibri.utils.kolibri_whitenoise import DynamicWhiteNoise
+from kolibri.utils.kolibri_whitenoise import EndRangeStaticFile
+from kolibri.utils.kolibri_whitenoise import FileFinder
 from whitenoise.httpstatus_backport import HTTPStatus
 from whitenoise.responders import NOT_ALLOWED_RESPONSE
 from whitenoise.responders import Response
@@ -17,9 +17,6 @@ from .android_utils import document_tree_join
 from .android_utils import is_document_uri
 from .android_utils import open_file
 from .android_utils import stat_file
-
-# We import from evil_kolibri so we can monkey-patch DynamicWhiteNoise from
-# kolibri without creating a circular dependency.
 
 logger = logging.getLogger(__name__)
 
