@@ -105,11 +105,17 @@ src/kolibri: clean
 	src/kolibri/dist/sqlalchemy/testing
 	find src/kolibri -name '*.js.map' -exec rm '{}' '+'
 	# End of cleanup.
+	# FIXME custom explore plugin:
+	pip install --target=src --no-deps --upgrade ../kolibri-explore-plugin/dist/kolibri_explore_plugin-*.whl
 	# patch Django to allow migrations to be pyc files, as p4a compiles and deletes the originals
 	sed -i 's/if name.endswith(".py"):/if name.endswith(".py") or name.endswith(".pyc"):/g' src/kolibri/dist/django/db/migrations/loader.py
 	# Apply kolibri patches
 	patch -d src/ -p1 < patches/0001-Add-track-progress-information-to-channelimport.patch
 	patch -d src/ -p1 < patches/0001-Break-up-DynamicWhiteNoise-code.patch
+	patch -d src/ -p1 < patches/0001-Fake-Explore.patch
+	rm -r src/kolibri/plugins/learn/static/*
+	cp -r ../kolibri-16-alpha/kolibri/plugins/learn/static/* src/kolibri/plugins/learn/static/
+
 
 src/evil_kolibri: src/kolibri
 	mkdir -p src/evil_kolibri/utils
@@ -119,7 +125,9 @@ src/evil_kolibri: src/kolibri
 
 .PHONY: apps-bundle.zip
 apps-bundle.zip:
-	wget -N https://github.com/endlessm/kolibri-explore-plugin/releases/latest/download/apps-bundle.zip
+	# wget -N https://github.com/endlessm/kolibri-explore-plugin/releases/latest/download/apps-bundle.zip
+	# FIXME custom apps-bundle.zip:
+	cp ../kolibri-explore-plugin/apps-bundle.zip ./apps-bundle.zip
 
 clean-apps-bundle:
 	- rm -rf src/apps-bundle
@@ -129,22 +137,28 @@ src/apps-bundle: clean-apps-bundle apps-bundle.zip
 
 .PHONY: collections.zip
 collections.zip:
-	wget -N https://github.com/endlessm/endless-key-collections/archive/refs/heads/main.zip
-	mv main.zip collections.zip
+	# wget -N https://github.com/endlessm/endless-key-collections/archive/refs/heads/main.zip
+	# mv main.zip collections.zip
+	# FIXME custom collections:
+	touch collections.zip
 
 clean-collections:
 	- rm -rf src/collections
 
 src/collections: clean-collections collections.zip
-	unzip -qo collections.zip
-	mv endless-key-collections-main/json/ src/collections
-	rm -rf endless-key-collections-main
+	# unzip -qo collections.zip
+	# mv endless-key-collections-main/json/ src/collections
+	# rm -rf endless-key-collections-main
+	# FIXME custom collections:
+	cp -r ../kolibri-explore-plugin/kolibri_explore_plugin/static/collections/ src/collections
 
 clean-welcomeScreen:
 	- rm -rf assets/welcomeScreen _explore
 
 assets/welcomeScreen: clean-welcomeScreen
-	pip install --target=_explore --no-deps kolibri_explore_plugin
+	# pip install --target=_explore --no-deps kolibri_explore_plugin
+	# FIXME custom welcomeScreen:
+	pip install --target=_explore --no-deps --upgrade ../kolibri-explore-plugin/dist/kolibri_explore_plugin-*.whl
 	cp -r _explore/kolibri_explore_plugin/welcomeScreen/ assets/
 
 .PHONY: p4a_android_distro

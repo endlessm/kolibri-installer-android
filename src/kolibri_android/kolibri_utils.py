@@ -18,9 +18,7 @@ logger = logging.getLogger(__name__)
 
 # These Kolibri plugins conflict with the plugins listed in REQUIRED_PLUGINS
 # or OPTIONAL_PLUGINS:
-DISABLED_PLUGINS = [
-    "kolibri.plugins.learn",
-]
+DISABLED_PLUGINS = []
 
 # These Kolibri plugins must be enabled for the application to function
 # correctly:

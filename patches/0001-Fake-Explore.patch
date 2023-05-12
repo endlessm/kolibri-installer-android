@@ -1,0 +1,22 @@
+From 0b1d8fab4d4f0f9d544b192e49e78051a3aaaf45 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Manuel=20Qui=C3=B1ones?= <manuel.por.aca@gmail.com>
+Date: Thu, 11 May 2023 11:30:17 -0300
+Subject: [PATCH] Fake Explore
+
+
+diff --git a/kolibri/plugins/learn/kolibri_plugin.py b/kolibri/plugins/learn/kolibri_plugin.py
+index 0bd50ea1b9..03ef38334c 100644
+--- a/kolibri/plugins/learn/kolibri_plugin.py
++++ b/kolibri/plugins/learn/kolibri_plugin.py
+@@ -44,7 +44,7 @@ class LearnRedirect(RoleBasedRedirectHook):
+ 
+     @property
+     def url(self):
+-        return self.plugin_url(Learn, "learn")
++        return "/explore"
+ 
+ 
+ @register_hook
+-- 
+2.30.2
+
