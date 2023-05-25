@@ -21,9 +21,9 @@ class KolibriAppProcessBus(BaseKolibriProcessBus):
         if enable_zeroconf:
             ZeroConfPlugin(self, self.port).subscribe()
 
-        KolibriServerPlugin(self, self.port).subscribe()
+        AndroidKolibriServerPlugin(self, self.port).subscribe()
 
-        ZipContentServerPlugin(self, self.zip_port).subscribe()
+        AndroidZipContentServerPlugin(self, self.zip_port).subscribe()
 
     def get_app_key(self):
         return DeviceAppKey.get_app_key()
@@ -71,3 +71,19 @@ class AppPlugin(SimplePlugin):
         next_url = self.application.get_saved_kolibri_path() or ""
         start_url = urljoin(base_url, next_url)
         self.application.replace_url(start_url)
+
+
+class AndroidKolibriServerPlugin(KolibriServerPlugin):
+    @property
+    def application(self):
+        from kolibri_android.kolibri_extra.wsgi import application
+
+        return application
+
+
+class AndroidZipContentServerPlugin(ZipContentServerPlugin):
+    @property
+    def application(self):
+        from kolibri_android.kolibri_extra.alt_wsgi import alt_application
+
+        return alt_application
