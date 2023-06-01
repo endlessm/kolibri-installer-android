@@ -154,7 +154,9 @@ public class KolibriAndroidHelper {
 
     private void enableDesktopMode() {
         mMainWebView.getSettings().setUserAgentString(
-            mMainWebView.getSettings().getUserAgentString().replace("Android", "Human")
+            mMainWebView.getSettings().getUserAgentString()
+                .replace("Android", "Human")
+                .replaceFirst("Version\\/\\d+\\.\\d+", "")
         );
     }
 
