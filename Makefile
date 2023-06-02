@@ -29,6 +29,14 @@ PODMAN := podman
 PYTHON_FOR_ANDROID := python-for-android
 TOOLBOX := toolbox
 
+ifdef EXPLOREPLUGIN_WHEEL_PATH
+	EXPLOREPLUGIN_WHEEL := ${EXPLOREPLUGIN_WHEEL_PATH}
+	EXPLOREPLUGIN_TARGET := src
+else
+	EXPLOREPLUGIN_WHEEL := kolibri_explore_plugin
+	EXPLOREPLUGIN_TARGET := _explore
+endif
+
 # This checks if an environment variable with a specific name
 # exists. If it doesn't, it prints an error message and exits.
 # For example to check for the presence of the ANDROIDSDK environment
@@ -119,7 +127,11 @@ src/evil_kolibri: src/kolibri
 
 .PHONY: apps-bundle.zip
 apps-bundle.zip:
-	wget -N https://github.com/endlessm/kolibri-explore-plugin/releases/latest/download/apps-bundle.zip
+	@ if [ "${APPSBUNDLE_PATH}" = "" ]; then \
+		wget -N https://github.com/endlessm/kolibri-explore-plugin/releases/latest/download/apps-bundle.zip; \
+	else \
+		cp '${APPSBUNDLE_PATH}' ./apps-bundle.zip; \
+	fi
 
 clean-apps-bundle:
 	- rm -rf src/apps-bundle
@@ -140,12 +152,19 @@ src/collections: clean-collections collections.zip
 	mv endless-key-collections-main/json/ src/collections
 	rm -rf endless-key-collections-main
 
-clean-welcomeScreen:
-	- rm -rf assets/welcomeScreen _explore
+clean-local-kolibri-explore-plugin:
+	# The * is to also remove the VERSION.dist-info directory:
+	- rm -rf ${EXPLOREPLUGIN_TARGET}/kolibri_explore_plugin*
 
-assets/welcomeScreen: clean-welcomeScreen
-	pip install --target=_explore --no-deps kolibri_explore_plugin
-	cp -r _explore/kolibri_explore_plugin/welcomeScreen/ assets/
+.PHONY: local-kolibri-explore-plugin
+local-kolibri-explore-plugin: clean-local-kolibri-explore-plugin
+	pip install --target=${EXPLOREPLUGIN_TARGET} --no-deps ${EXPLOREPLUGIN_WHEEL}
+
+clean-welcomeScreen:
+	- rm -rf assets/welcomeScreen
+
+assets/welcomeScreen: clean-welcomeScreen local-kolibri-explore-plugin
+	cp -r ${EXPLOREPLUGIN_TARGET}/kolibri_explore_plugin/welcomeScreen/ assets/
 
 .PHONY: p4a_android_distro
 p4a_android_distro: needs-android-dirs

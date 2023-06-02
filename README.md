@@ -51,6 +51,16 @@ To download a Kolibri WHL file, you can use `make whl=<URL>` from the command li
 
 PS. If `p4a` command is not found, please check the ticket: ["p4a: command not found"](https://github.com/kivy/python-for-android/issues/1167). If you installed it with `--user`, make sure that `~/.local/bin` is in your `$PATH`.
 
+### Custom Explore Plugin version
+
+By default, kolibri-installer-android includes the newest released version of [kolibri-explore-plugin](https://github.com/endlessm/kolibri-explore-plugin). To test a different version, set the `EXPLOREPLUGIN_WHEEL_PATH` and `APPSBUNDLE_PATH` environment variables:
+
+    make kolibri.apk.unsigned \
+    EXPLOREPLUGIN_WHEEL_PATH=/path/to/kolibri_explore_plugin.whl \
+    APPSBUNDLE_PATH=/path/to/apps-bundle.zip
+
+The resulting app build will use the provided Explore plugin WHL and apps bundle.
+
 ## Build on Toolbox
 
 Toolbox allows a mixture of the above build processes by providing a
