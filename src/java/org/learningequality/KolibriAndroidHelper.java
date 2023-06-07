@@ -76,6 +76,8 @@ public class KolibriAndroidHelper {
     public void configure(final Runnable startWithNetwork, final Runnable startWithUSB, final Runnable loadingReady) {
         Log.i(TAG, "KolibriAndroidHelper configure");
 
+        mActivity.mOpenExternalLinksInBrowser = true;
+
         mLoadingWebView.setWebViewClient(new WebViewClient() {
             private boolean mInWelcome = false;
 
