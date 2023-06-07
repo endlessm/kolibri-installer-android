@@ -100,6 +100,9 @@ class MainActivity(BaseActivity):
     def __init__(self):
         super().__init__()
 
+        # Tell PythonActivity to open external links in a browser.
+        PythonActivity.mOpenExternalLinksInBrowser = True
+
         configure_webview(
             Runnable(self._on_start_with_network),
             Runnable(self._on_start_with_usb),
