@@ -139,19 +139,6 @@ clean-apps-bundle:
 src/apps-bundle: clean-apps-bundle apps-bundle.zip
 	unzip -qo apps-bundle.zip -d src/apps-bundle
 
-.PHONY: collections.zip
-collections.zip:
-	wget -N https://github.com/endlessm/endless-key-collections/archive/refs/heads/main.zip
-	mv main.zip collections.zip
-
-clean-collections:
-	- rm -rf src/collections
-
-src/collections: clean-collections collections.zip
-	unzip -qo collections.zip
-	mv endless-key-collections-main/json/ src/collections
-	rm -rf endless-key-collections-main
-
 clean-local-kolibri-explore-plugin:
 	# The * is to also remove the VERSION.dist-info directory:
 	- rm -rf ${EXPLOREPLUGIN_TARGET}/kolibri_explore_plugin*
@@ -185,7 +172,6 @@ DIST_DEPS = \
 	src/kolibri \
 	src/evil_kolibri \
 	src/apps-bundle \
-	src/collections \
 	assets/welcomeScreen \
 	needs-version \
 	dist/version.json
