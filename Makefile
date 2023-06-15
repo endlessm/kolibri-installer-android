@@ -11,6 +11,8 @@ ARCH_OPTIONS := $(foreach arch,$(ARCHES),--arch=$(arch))
 
 OSNAME := $(shell uname -s)
 
+COLLECTIONS_TARBALL_URL := $(shell curl -s https://api.github.com/repos/endlessm/endless-key-collections/releases/latest | jq '.tarball_url' --raw-output)
+
 ifeq ($(OSNAME), Darwin)
 	PLATFORM := macosx
 else
@@ -139,18 +141,16 @@ clean-apps-bundle:
 src/apps-bundle: clean-apps-bundle apps-bundle.zip
 	unzip -qo apps-bundle.zip -d src/apps-bundle
 
-.PHONY: collections.zip
-collections.zip:
-	wget -N https://github.com/endlessm/endless-key-collections/archive/refs/heads/main.zip
-	mv main.zip collections.zip
+.PHONY: collections.tar.gz
+collections.tar.gz:
+	wget -N ${COLLECTIONS_TARBALL_URL} -O collections.tar.gz
 
 clean-collections:
 	- rm -rf src/collections
 
-src/collections: clean-collections collections.zip
-	unzip -qo collections.zip
-	mv endless-key-collections-main/json/ src/collections
-	rm -rf endless-key-collections-main
+src/collections: clean-collections collections.tar.gz
+	mkdir -p src/collections
+	tar -xz -f collections.tar.gz -C src/collections --overwrite '*/json/*.json' --strip-components=2
 
 clean-local-kolibri-explore-plugin:
 	# The * is to also remove the VERSION.dist-info directory:
