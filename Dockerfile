@@ -11,7 +11,9 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
         autopoint \
         build-essential \
         ccache \
+        curl \
         git \
+        jq \
         libffi-dev \
         libssl-dev \
         libtool \
