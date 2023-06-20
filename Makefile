@@ -150,7 +150,7 @@ clean-collections:
 
 src/collections: clean-collections collections.tar.gz
 	mkdir -p src/collections
-	tar -xz -f collections.tar.gz -C src/collections --overwrite '*/json/*.json' --strip-components=2
+	tar -xz -f collections.tar.gz -C src/collections --strip-components=2 --wildcards */json/*.json
 
 clean-local-kolibri-explore-plugin:
 	# The * is to also remove the VERSION.dist-info directory:
