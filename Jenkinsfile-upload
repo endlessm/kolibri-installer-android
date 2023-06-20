@@ -9,6 +9,7 @@ pipeline {
     parameters {
         text(
             name: 'RELEASE_NOTES',
+            default: '[]',
             description: '''\
 <p>Release notes in JSON. The expected format is
 an array of objects with <code>language</code> and <code>text</code>
@@ -19,7 +20,10 @@ properties. For example:</p>
   {"language": "en-US", "text": "Fixed a problem"},
   {"language": "de-DE", "text": "Ein Problem wurde behoben"}
 ]
-</pre>''',
+</pre>
+
+<p>The default value is an empty array, which corresponds to
+no release notes.</p>''',
         )
 }
 
