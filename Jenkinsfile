@@ -8,6 +8,14 @@ pipeline {
         }
     }
 
+    parameters {
+        booleanParam(
+            name: 'UPLOAD',
+            defaultValue: false,
+            description: 'Upload the built Kolibri Android packages for internal testers',
+        )
+    }
+
     environment {
         // URL for the Kolibri wheel to include.
         // FIXME: It would be nice to cache this somehow.
@@ -81,6 +89,20 @@ pipeline {
     }
 
     post {
+        success {
+            script {
+                if (!params.ghprbPullId && params.UPLOAD) {
+                    echo "Upload the built Kolibri Android packages for internal testers"
+                    build(
+                        job: 'kolibri-installer-android-upload',
+                        parameters: [
+                            string(name: 'RELEASE_NOTES', value: '[]'),
+                        ]
+                    )
+                }
+            }
+        }
+
         failure {
             // Send email on failures when this not a PR. Unfortunately,
             // there's no declarative pipeline step to test for this
