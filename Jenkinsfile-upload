@@ -9,7 +9,7 @@ pipeline {
     parameters {
         text(
             name: 'RELEASE_NOTES',
-            default: '[]',
+            defaultValue: '[]',
             description: '''\
 <p>Release notes in JSON. The expected format is
 an array of objects with <code>language</code> and <code>text</code>
