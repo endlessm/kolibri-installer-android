@@ -1,19 +1,14 @@
 // Jenkins pipeline
 // https://www.jenkins.io/doc/book/pipeline/
+//
+// Required parameters: UPLOAD
+
 pipeline {
     agent {
         dockerfile {
             // Try to use the same node to make use of caching.
             reuseNode true
         }
-    }
-
-    parameters {
-        booleanParam(
-            name: 'UPLOAD',
-            defaultValue: false,
-            description: 'Upload the built Kolibri Android packages for internal testers',
-        )
     }
 
     environment {

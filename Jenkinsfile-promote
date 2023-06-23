@@ -1,23 +1,12 @@
 // Jenkins promote pipeline
 //
 // https://www.jenkins.io/doc/book/pipeline/
+//
+// Required parameters: VERSION_CODE, TRACK
 
 pipeline {
     // Any agent is fine as all the work happens on the controller.
     agent any
-
-    parameters {
-        string(
-            name: 'VERSION_CODE',
-            description: 'Version code to promote',
-            trim: true,
-        )
-        choice(
-            name: 'TRACK',
-            description: 'Release track to promote to',
-            choices: ['alpha', 'beta', 'production'],
-        )
-    }
 
     stages {
         stage('Release') {
