@@ -89,6 +89,10 @@ pipeline {
     }
 
     post {
+        always {
+            buildDescription("UPLOAD=${params.UPLOAD}")
+        }
+
         success {
             script {
                 if (!params.ghprbPullId && params.UPLOAD) {
