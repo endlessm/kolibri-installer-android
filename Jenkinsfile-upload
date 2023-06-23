@@ -16,7 +16,7 @@ pipeline {
                 sh 'rm -rf dist'
                 copyArtifacts(
                     projectName: 'kolibri-installer-android',
-                    selector: lastSuccessful(),
+                    selector: upstream(fallbackToLastSuccessful: true),
                     filter: 'dist/kolibri-release-*.aab, dist/version.json',
                     fingerprintArtifacts: true,
                 )
