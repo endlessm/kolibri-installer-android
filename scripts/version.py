@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import importlib
 import os
 import subprocess
 import sys
@@ -32,6 +33,23 @@ def explore_plugin_version_name():
 
 
 def explore_plugin_version():
+    # kolibri-explore-plugin v6.27.0 and newer store the version in a separate
+    # file, so try that first. Then fall back to parsing __init__.py, which is
+    # what older versions used.
+    try:
+        spec = importlib.util.spec_from_file_location(
+            "_version", f"./{EXPLOREPLUGIN_TARGET}/kolibri_explore_plugin/_version.py"
+        )
+        if not spec:
+            raise ImportError
+
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        return getattr(module, "__version__")
+    except (ImportError, FileNotFoundError):
+        pass
+
     with open(
         f"./{EXPLOREPLUGIN_TARGET}/kolibri_explore_plugin/__init__.py", "r"
     ) as version_file:
