@@ -59,7 +59,7 @@ def explore_plugin_version():
 
 def explore_plugin_simple_version():
     full_version = explore_plugin_version()
-    major, minor, patch = full_version.split(".")
+    [major, minor, patch, *_] = full_version.split(".")
     if patch == "0":
         return ".".join([major, minor])
     return full_version
