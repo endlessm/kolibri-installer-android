@@ -175,6 +175,9 @@ needs-version: src/kolibri local-kolibri-explore-plugin
 	$(eval VERSION_NAME ?= $(shell python3 scripts/version.py version_name))
 	$(eval VERSION_CODE ?= $(shell python3 scripts/version.py version_code))
 	$(eval EK_VERSION ?= $(shell python3 scripts/version.py ek_version))
+	$(if $(VERSION_NAME), ,$(error VERSION_NAME not defined))
+	$(if $(VERSION_CODE), ,$(error VERSION_CODE not defined))
+	$(if $(EK_VERSION), ,$(error EK_VERSION not defined))
 
 dist/version.json: needs-version
 	mkdir -p dist
