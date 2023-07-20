@@ -1,3 +1,3 @@
-cython
+cython~=0.29
 virtualenv
 git+https://github.com/endlessm/python-for-android@v2022.09.04-endless10#egg=python-for-android
