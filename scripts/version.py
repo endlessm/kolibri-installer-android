@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import importlib
+import importlib.util
 import os
 import subprocess
 import sys
