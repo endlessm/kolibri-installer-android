@@ -171,7 +171,7 @@ p4a_android_distro: needs-android-dirs
 	$(P4A) create $(ARCH_OPTIONS)
 
 .PHONY: needs-version
-needs-version: src/kolibri
+needs-version: src/kolibri local-kolibri-explore-plugin
 	$(eval VERSION_NAME ?= $(shell python3 scripts/version.py version_name))
 	$(eval VERSION_CODE ?= $(shell python3 scripts/version.py version_code))
 	$(eval EK_VERSION ?= $(shell python3 scripts/version.py ek_version))
