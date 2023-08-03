@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 
 from jnius import autoclass
 
+from ..android_utils import check_webview_version
 from ..android_utils import choose_endless_key_uris
 from ..android_utils import get_endless_key_uris
 from ..android_utils import has_any_external_storage_device
@@ -169,6 +170,7 @@ class MainActivity(BaseActivity):
             return None
 
     def run(self):
+        check_webview_version()
         show_loading_page(INITIAL_LOADING_PAGE_URL)
         while True:
             if callable(self.TO_RUN_IN_MAIN):
