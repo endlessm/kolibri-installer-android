@@ -6,6 +6,9 @@ FROM docker.io/endlessm/eos-toolbox:master
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get install -y \
+        java-common \
+        ca-certificates-java && \
+    apt-get install -y \
         autoconf \
         automake \
         autopoint \
