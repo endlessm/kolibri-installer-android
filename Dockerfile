@@ -15,7 +15,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
         libffi-dev \
         libssl-dev \
         libtool \
-        openjdk-11-jdk-headless \
+        openjdk-17-jdk-headless \
         python-is-python3 \
         python3-dev \
         python3-pip \
