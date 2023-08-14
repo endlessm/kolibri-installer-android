@@ -73,7 +73,7 @@ public class KolibriAndroidHelper {
 
     // Configure the WebView to allow fullscreen based on:
     // https://stackoverflow.com/questions/15768837/playing-html5-video-on-fullscreen-in-android-webview/56186877#56186877
-    public void configure(final Runnable startWithNetwork, final Runnable startWithUSB, final Runnable loadingReady) {
+    public void configure(final Runnable startWithNetwork, final Runnable loadingReady) {
         Log.i(TAG, "KolibriAndroidHelper configure");
 
         mActivity.mOpenExternalLinksInBrowser = true;
@@ -107,10 +107,6 @@ public class KolibriAndroidHelper {
                 editor.commit();
                 Log.v(TAG, packId);
                 startWithNetwork.run();
-            }
-            @JavascriptInterface
-            public void startWithUSB() {
-                startWithUSB.run();
             }
         } , "WelcomeWrapper");
 

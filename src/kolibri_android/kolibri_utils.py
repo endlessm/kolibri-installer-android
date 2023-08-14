@@ -4,7 +4,6 @@ import re
 from importlib.util import find_spec
 
 from .android_utils import get_android_node_id
-from .android_utils import get_endless_key_uris
 from .android_utils import get_home_folder
 from .android_utils import get_initial_content_pack_id
 from .android_utils import get_logging_config
@@ -40,7 +39,6 @@ def init_kolibri(**kwargs):
     logger.info("Initializing Kolibri and running any upgrade routines")
 
     _init_kolibri_env()
-    _update_kolibri_content_fallback_dirs()
     _update_explore_plugin_options()
 
     _monkeypatch_kolibri_logging()
@@ -108,20 +106,6 @@ def _update_explore_plugin_options():
         os.environ["KOLIBRI_INITIAL_CONTENT_PACK"] = pack_id
     else:
         os.environ["KOLIBRI_USE_EK_IGUANA_PAGE"] = "1"
-
-
-def _update_kolibri_content_fallback_dirs():
-    endless_key_uris = get_endless_key_uris()
-
-    if endless_key_uris is None:
-        return
-
-    content_fallback_dirs = AndroidDynamicWhiteNoise.encode_root(
-        endless_key_uris["content"]
-    )
-
-    logger.info("Setting KOLIBRI_CONTENT_FALLBACK_DIRS to %s", content_fallback_dirs)
-    os.environ["KOLIBRI_CONTENT_FALLBACK_DIRS"] = content_fallback_dirs
 
 
 def _monkeypatch_kolibri_logging():
