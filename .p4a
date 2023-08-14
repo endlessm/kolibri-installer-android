@@ -17,6 +17,7 @@
 --icon assets/icon.png
 --icon-fg assets/icon-fg.png
 --icon-bg assets/icon-bg.png
+--window
 --fileprovider-paths src/fileprovider_paths.xml
 --add-asset assets/_load.html:_load.html
 --add-asset assets/welcomeScreen:welcomeScreen
