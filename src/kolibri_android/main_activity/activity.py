@@ -5,16 +5,8 @@ from urllib.parse import urlparse
 from jnius import autoclass
 
 from ..android_utils import check_webview_version
-from ..android_utils import choose_endless_key_uris
-from ..android_utils import get_endless_key_uris
-from ..android_utils import has_any_external_storage_device
-from ..android_utils import PermissionsCancelledError
-from ..android_utils import PermissionsWrongFolderError
-from ..android_utils import provision_endless_key_database
-from ..android_utils import set_endless_key_uris
 from ..android_utils import share_by_intent
 from ..android_utils import StartupState
-from ..android_utils import stat_file
 from ..application import BaseActivity
 from ..kolibri_utils import init_kolibri
 from ..runnable import Runnable
@@ -53,32 +45,6 @@ def set_app_key_cookie(url, app_key):
     KolibriAndroidHelper.getInstance().setAppKeyCookie(url, app_key)
 
 
-def is_endless_key_reachable():
-    """
-    Check if the KOLIBRI_HOME db file is reachable.
-
-    This only works after the user has granted permissions correctly. In other
-    case it always return False.
-    """
-
-    key_uris = get_endless_key_uris()
-    if not key_uris:
-        return False
-    try:
-        # Check if the USB is connected
-        stat_file(key_uris.get("db"))
-        evaluate_javascript_in_loading_webview("WelcomeApp.setHasUSB(true)")
-        return True
-    except FileNotFoundError:
-        evaluate_javascript_in_loading_webview("WelcomeApp.setHasUSB(false)")
-        return False
-
-
-def wait_until_endless_key_is_reachable():
-    repeat = not is_endless_key_reachable()
-    return repeat
-
-
 def _build_kolibri_process_bus(application):
     from .kolibri_bus import AppPlugin
     from .kolibri_bus import KolibriAppProcessBus
@@ -93,7 +59,6 @@ def _build_kolibri_process_bus(application):
 
 class MainActivity(BaseActivity):
     TO_RUN_IN_MAIN = None
-    _last_has_any_check = None
     _kolibri_bus = None
     _saved_kolibri_path = None
     _last_kolibri_path = None
@@ -103,7 +68,6 @@ class MainActivity(BaseActivity):
 
         configure_webview(
             Runnable(self._on_start_with_network),
-            Runnable(self._on_start_with_usb),
             Runnable(self._on_loading_ready),
         )
 
@@ -207,69 +171,14 @@ class MainActivity(BaseActivity):
 
         self._kolibri_bus.run()
 
-    def start_kolibri_with_usb(self):
-        key_uris = get_endless_key_uris()
-
-        if key_uris is None:
-            try:
-                key_uris = choose_endless_key_uris()
-            except PermissionsWrongFolderError:
-                evaluate_javascript_in_loading_webview(
-                    "WelcomeApp.showPermissionsWrongFolder()"
-                )
-                return
-            except PermissionsCancelledError:
-                evaluate_javascript_in_loading_webview(
-                    "WelcomeApp.showPermissionsCancelled()"
-                )
-                return
-
-        provision_endless_key_database(key_uris)
-        set_endless_key_uris(key_uris)
-
-        self.start_kolibri()
-
     def _on_start_with_network(self):
         self.TO_RUN_IN_MAIN = self.start_kolibri
-
-    def _on_start_with_usb(self):
-        self.TO_RUN_IN_MAIN = self.start_kolibri_with_usb
 
     def _on_loading_ready(self):
         startup_state = StartupState.get_current_state()
         if startup_state == StartupState.FIRST_TIME:
             logging.info("First time")
             evaluate_javascript_in_loading_webview("WelcomeApp.showWelcome()")
-
-            self.TO_RUN_IN_MAIN = self.check_has_any_external_storage_device
-
-        elif startup_state == StartupState.USB_USER:
-            logging.info("Starting USB mode")
-            # If it's USB we should have the permissions here so it's not needed to
-            # ask again
-
-            if not is_endless_key_reachable():
-                evaluate_javascript_in_loading_webview(
-                    "WelcomeApp.showConnectKeyRequired()"
-                )
-                self.TO_RUN_IN_MAIN = wait_until_endless_key_is_reachable
-            else:
-                self.TO_RUN_IN_MAIN = self.start_kolibri_with_usb
-
         else:
             logging.info("Starting network mode")
             self.TO_RUN_IN_MAIN = self.start_kolibri
-
-    def check_has_any_external_storage_device(self):
-        # Memorize the last check to avoid evaluating javascript when not
-        # needed:
-        has_any = has_any_external_storage_device()
-        if has_any != self._last_has_any_check:
-            self._last_has_any_check = has_any
-            if has_any:
-                evaluate_javascript_in_loading_webview("WelcomeApp.setHasUSB(true)")
-            else:
-                evaluate_javascript_in_loading_webview("WelcomeApp.setHasUSB(false)")
-        # By returning True the main loop calls this function over and
-        # over again, until another function TO_RUN_IN_MAIN is set.
-        return True

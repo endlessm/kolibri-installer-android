@@ -3,7 +3,6 @@ import json
 import logging
 import os
 import re
-import shutil
 import stat
 import sys
 from contextlib import closing
@@ -11,12 +10,9 @@ from enum import auto
 from enum import Enum
 from functools import partial
 from pathlib import Path
-from queue import Queue
 from urllib.parse import parse_qsl
 from urllib.parse import urlparse
 
-from android.activity import bind
-from android.activity import unbind
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from jnius import autoclass
@@ -85,7 +81,6 @@ WEBVIEW_MIN_MAJOR_VERSION = {
 
 # Globals to keep references to Java objects
 # See https://github.com/Android-for-Python/Android-for-Python-Users#pyjnius-memory-management
-_choose_directory_intent = None
 _notification_builder = None
 _notification_intent = None
 _send_intent = None
@@ -101,14 +96,6 @@ if not hasattr(Path, "is_relative_to"):
             return False
 
     Path.is_relative_to = _path_is_relative_to
-
-
-class PermissionsCancelledError(Exception):
-    pass
-
-
-class PermissionsWrongFolderError(Exception):
-    pass
 
 
 def is_service_context():
@@ -196,76 +183,6 @@ def get_initial_content_pack_id():
     return pack_id
 
 
-def get_endless_key_uris():
-    preferences = get_preferences()
-    content_uri = preferences.getString("key_content_uri", None)
-    db_uri = preferences.getString("key_db_uri", None)
-    logger.debug("Stored Endless Key URIs: content=%s, db=%s", content_uri, db_uri)
-
-    if content_uri and db_uri:
-        return {"content": content_uri, "db": db_uri}
-
-    return None
-
-
-def choose_endless_key_uris():
-    """Call the file picker and validate the chosen folder"""
-    activity = get_activity()
-    data_uri = choose_directory(activity, msg="Select the KOLIBRI_DATA folder")
-
-    if data_uri is None:
-        logger.info("User cancelled Endless Key selection")
-        raise PermissionsCancelledError()
-
-    tree_uri = Uri.parse(data_uri)
-    tree_doc_id = DocumentsContract.getTreeDocumentId(tree_uri)
-    tree_doc_uri = DocumentsContract.buildDocumentUriUsingTree(tree_uri, tree_doc_id)
-
-    content_resolver = activity.getContentResolver()
-    tree_files = document_tree_list_files(tree_doc_uri, content_resolver)
-
-    content = tree_files.get("content")
-    if not content or content["mime_type"] != Document.MIME_TYPE_DIR:
-        logger.info("The selected folder does not contain a content folder")
-        raise PermissionsWrongFolderError()
-    content_uri = content["uri"].toString()
-
-    preseeded_home = tree_files.get("preseeded_kolibri_home")
-    if not preseeded_home or preseeded_home["mime_type"] != Document.MIME_TYPE_DIR:
-        logger.info(
-            "The selected folder does not contain a preseeded_kolibri_home folder"
-        )
-        raise PermissionsWrongFolderError()
-    preseeded_home_files = document_tree_list_files(
-        preseeded_home["uri"], content_resolver
-    )
-
-    db = preseeded_home_files.get("db.sqlite3")
-    if not db or ["mime_type"] == Document.MIME_TYPE_DIR:
-        logger.info(
-            "The selected folder does not contain a db.sqlite3 file in the preseeded_kolibri_home folder"
-        )
-        raise PermissionsWrongFolderError()
-    db_uri = db["uri"].toString()
-
-    logger.info("Found Endless Key URIs: content=%s, db=%s", content_uri, db_uri)
-    return {"content": content_uri, "db": db_uri}
-
-
-def set_endless_key_uris(endless_key_uris):
-    if endless_key_uris is None:
-        return
-
-    content_uri = endless_key_uris["content"]
-    db_uri = endless_key_uris["db"]
-    if content_uri and db_uri:
-        logger.info("Setting Endless Key URIs: content=%s, db=%s", content_uri, db_uri)
-        editor = get_preferences().edit()
-        editor.putString("key_content_uri", content_uri)
-        editor.putString("key_db_uri", db_uri)
-        editor.commit()
-
-
 def is_document_uri(path, context=None):
     if not urlparse(path).scheme:
         return False
@@ -303,12 +220,6 @@ def document_opener(path, flags, content_resolver=None):
     afd = content_resolver.openAssetFileDescriptor(uri, mode)
     pfd = afd.getParcelFileDescriptor()
     return pfd.detachFd()
-
-
-def open_document(uri, mode="r", **kwargs):
-    """open wrapper using DocumentsContract opener"""
-    kwargs["opener"] = document_opener
-    return open(uri, mode=mode, **kwargs)
 
 
 def open_file(path, mode="r", context=None, content_resolver=None, **kwargs):
@@ -441,214 +352,6 @@ def document_tree_join(tree_doc_uri, path, content_resolver=None):
         path_uri.toString(),
     )
     return path_uri
-
-
-def document_tree_list_files(tree_doc_uri, content_resolver=None):
-    if content_resolver is None:
-        content_resolver = get_activity().getContentResolver()
-
-    tree_doc_id = DocumentsContract.getDocumentId(tree_doc_uri)
-    children_uri = DocumentsContract.buildChildDocumentsUriUsingTree(
-        tree_doc_uri, tree_doc_id
-    )
-
-    columns = (
-        Document.COLUMN_DISPLAY_NAME,
-        Document.COLUMN_DOCUMENT_ID,
-        Document.COLUMN_LAST_MODIFIED,
-        Document.COLUMN_MIME_TYPE,
-        Document.COLUMN_SIZE,
-    )
-    listing = {}
-    with closing(content_resolver.query(children_uri, columns, None, None)) as cursor:
-        while cursor.moveToNext():
-            doc_id = cursor.getString(1)
-            doc_uri = DocumentsContract.buildDocumentUriUsingTree(tree_doc_uri, doc_id)
-
-            listing[cursor.getString(0)] = {
-                "id": doc_id,
-                "uri": doc_uri,
-                "last_modified": cursor.getLong(2),
-                "mime_type": cursor.getString(3),
-                "size": cursor.getLong(4),
-            }
-
-    return listing
-
-
-def provision_endless_key_database(endless_key_uris):
-    if endless_key_uris is not None:
-        home_folder = get_home_folder()
-        dst_path = os.path.join(home_folder, "db.sqlite3")
-        if os.path.exists(dst_path):
-            logger.debug("EK database already exists, skipping.")
-            return
-        if not os.path.exists(home_folder):
-            os.mkdir(home_folder)
-
-        src_uri = endless_key_uris["db"]
-        with open_document(src_uri, "rb") as src:
-            with open(dst_path, "wb") as dst:
-                # The file metadata on the database is irrelevant, so we
-                # only need to copy the content.
-                shutil.copyfileobj(src, dst)
-        logger.debug("EK database provisioned.")
-
-
-def _get_directory_path(volume):
-    if SDK_INT < 30:
-        uuid = volume.getUuid()
-        if uuid is None:
-            return None
-        return os.path.join("/storage", uuid)
-    else:
-        directory_file = volume.getDirectory()
-        if directory_file is None:
-            return None
-        return directory_file.toString()
-
-
-def _get_open_document_intent(volume):
-    # Compatibility with SDK 28 and eariler
-    # https://developer.android.com/sdk/api_diff/29/changes/android.os.storage.StorageVolume#android.os.storage.StorageVolume.createOpenDocumentTreeIntent_added()
-    if SDK_INT < 29:
-        return volume.createAccessIntent(None)
-    else:
-        return volume.createOpenDocumentTreeIntent()
-
-
-def has_any_external_storage_device():
-    activity = get_activity()
-    storage_manager = activity.getSystemService(Context.STORAGE_SERVICE)
-
-    found = False
-
-    for volume in storage_manager.getStorageVolumes():
-        if volume is None or volume.getUuid() == MY_FILES_UUID:
-            continue
-
-        elif volume.isRemovable() and volume.getState() == "mounted":
-            found = True
-            break
-
-    return found
-
-
-def create_open_kolibri_data_intent(context):
-    """Create an ACTION_OPEN_DOCUMENT_TREE using KOLIBRI_DATA URI"""
-    storage_manager = context.getSystemService(Context.STORAGE_SERVICE)
-    for volume in storage_manager.getStorageVolumes():
-        if volume is None:
-            continue
-        state = volume.getState()
-        is_removable = volume.isRemovable()
-        uuid = volume.getUuid()
-        path = _get_directory_path(volume)
-        logger.debug(
-            "Found volume UUID=%s, state=%s, removable=%s, mount=%s",
-            uuid,
-            state,
-            is_removable,
-            path,
-        )
-
-        if not is_removable or state != "mounted" or uuid == MY_FILES_UUID:
-            continue
-
-        # Create an ACTION_OPEN_DOCUMENT_TREE intent with the URI of the
-        # volume root as the EXTRA_INITIAL_URI.
-        intent = _get_open_document_intent(volume)
-        intent_data = intent.getParcelableExtra(DocumentsContract.EXTRA_INITIAL_URI)
-
-        if not intent_data:
-            continue
-
-        # Extract the initial URI from the intent and then adjust it so
-        # it includes the expected KOLIBRI_DATA path. If that path
-        # doesn't exist, then the file picker will use the default
-        # internal storage root.
-        initial_uri = cast("android.net.Uri", intent_data)
-        logger.debug(
-            "Volume %s OPEN_DOCUMENT_TREE initial URI: %s", uuid, initial_uri.toString()
-        )
-        root_id = DocumentsContract.getRootId(initial_uri)
-        kolibri_data_id = f"{root_id}:KOLIBRI_DATA"
-        kolibri_data_uri = DocumentsContract.buildDocumentUri(
-            initial_uri.getAuthority(), kolibri_data_id
-        )
-        logger.debug(
-            "Volume %s OPEN_DOCUMENT_TREE KOLIBRI_DATA URI: %s",
-            uuid,
-            kolibri_data_uri.toString(),
-        )
-        intent.putExtra(
-            DocumentsContract.EXTRA_INITIAL_URI,
-            cast("android.os.Parcelable", kolibri_data_uri),
-        )
-
-        return intent
-
-    # No removable volume found, return the default OPEN_DOCUMENT_TREE
-    # intent.
-    return Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-
-
-def choose_directory(activity=None, msg=None, timeout=None):
-    """Run the file picker to choose a directory"""
-    global _choose_directory_intent
-
-    if activity is None:
-        activity = get_activity()
-    content_resolver = activity.getContentResolver()
-
-    data_queue = Queue(1)
-    OPEN_DIRECTORY_REQUEST_CODE = 0xF11E
-
-    def on_activity_result(request, result, intent):
-        if request != OPEN_DIRECTORY_REQUEST_CODE:
-            return
-
-        if result != Activity.RESULT_OK:
-            if result == Activity.RESULT_CANCELED:
-                logger.info("Open directory request cancelled")
-            else:
-                logger.info("Open directory request result %d", result)
-            data_queue.put(None, timeout=timeout)
-            return
-
-        if intent is None:
-            logger.warning("Open directory result contains no data")
-            data_queue.put(None, timeout=timeout)
-            return
-
-        uri = intent.getData()
-        uri_str = uri.toString()
-        logger.info("Open directory request returned URI %s", uri_str)
-
-        logger.debug("Persisting read permissions for %s", uri_str)
-        flags = intent.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION
-        content_resolver.takePersistableUriPermission(uri, flags)
-
-        data_queue.put(uri_str, timeout=timeout)
-
-    _choose_directory_intent = create_open_kolibri_data_intent(activity)
-    logger.info("Open directory intent: %s", _choose_directory_intent.toString())
-    extras = _choose_directory_intent.getExtras()
-    if extras:
-        logger.info("Open directory intent extras: %s", extras.toString())
-
-    bind(on_activity_result=on_activity_result)
-    try:
-        activity.startActivityForResult(
-            _choose_directory_intent,
-            OPEN_DIRECTORY_REQUEST_CODE,
-        )
-        if msg:
-            show_toast(activity, msg, Toast.LENGTH_LONG)
-        return data_queue.get(timeout=timeout)
-    finally:
-        unbind(on_activity_result=on_activity_result)
-        _choose_directory_intent = None
 
 
 def show_toast(context, msg, duration):
@@ -1033,7 +736,6 @@ def check_webview_version():
 
 class StartupState(Enum):
     FIRST_TIME = auto()
-    USB_USER = auto()
     NETWORK_USER = auto()
 
     @classmethod
@@ -1041,7 +743,6 @@ class StartupState(Enum):
         """
         Returns the current app startup state that could be:
             * FIRST_TIME
-            * USB_USER
             * NETWORK_USER
         """
         home = get_home_folder()
@@ -1050,11 +751,6 @@ class StartupState(Enum):
         db_path = os.path.join(home, "db.sqlite3")
         if not os.path.exists(db_path):
             return cls.FIRST_TIME
-
-        # If there are Endless Key URIs in the preferences, the app has
-        # been started with an Endless Key USB.
-        if get_endless_key_uris():
-            return cls.USB_USER
 
         # in other case, the app is initialized but with content downloaded
         # using the network
