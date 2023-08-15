@@ -2,7 +2,6 @@ import logging
 import os
 import re
 import stat
-from urllib.parse import urlparse
 from wsgiref.headers import Headers
 
 from django.contrib.staticfiles import finders
@@ -117,9 +116,7 @@ class DynamicWhiteNoise(WhiteNoise):
         self.context = get_activity()
         self.content_resolver = self.context.getContentResolver()
         self.dynamic_finder = AndroidFileFinder(
-            self.decode_locations(dynamic_locations or []),
-            self.context,
-            self.content_resolver,
+            dynamic_locations or [], self.context, self.content_resolver
         )
         # Generate a regex to check if a path matches one of our dynamic
         # location prefixes
@@ -205,20 +202,3 @@ class DynamicWhiteNoise(WhiteNoise):
             stat_cache=stat_cache,
             encodings={"gzip": path + ".gz", "br": path + ".br"},
         )
-
-    @staticmethod
-    def encode_root(root):
-        if urlparse(root).scheme:
-            root = "/" + root
-        return root
-
-    @staticmethod
-    def decode_root(root):
-        decoded = root.lstrip("/")
-        if urlparse(decoded).scheme:
-            root = decoded
-        return root
-
-    @classmethod
-    def decode_locations(cls, locations):
-        return [(prefix, cls.decode_root(root)) for prefix, root in locations]
