@@ -10,7 +10,6 @@ from .android_utils import get_logging_config
 from .android_utils import get_signature_key_issuing_organization
 from .android_utils import get_timezone_name
 from .android_utils import get_version_name
-from .android_whitenoise import DynamicWhiteNoise
 from .globals import SCRIPT_PATH
 
 logger = logging.getLogger(__name__)
@@ -42,7 +41,6 @@ def init_kolibri(**kwargs):
     _update_explore_plugin_options()
 
     _monkeypatch_kolibri_logging()
-    _monkeypatch_whitenoise()
 
     for plugin_name in DISABLED_PLUGINS:
         _kolibri_disable_plugin(plugin_name)
@@ -119,13 +117,6 @@ def _monkeypatch_kolibri_logging():
 
     logger.info("Monkeypatching kolibri get_default_logging_config")
     kolibri.utils.logger.get_default_logging_config = get_logging_config
-
-
-def _monkeypatch_whitenoise():
-    from kolibri.utils import kolibri_whitenoise
-
-    logger.info("Applying DynamicWhiteNoise workarounds")
-    kolibri_whitenoise.DynamicWhiteNoise = DynamicWhiteNoise
 
 
 def _kolibri_initialize(**kwargs):
