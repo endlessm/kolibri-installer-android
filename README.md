@@ -215,8 +215,8 @@ target will install the necessary pieces. Assuming the SDK is installed in
 Next, install a platform and system image:
 
 ```
-/opt/android/sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-30"
-/opt/android/sdk/cmdline-tools/latest/bin/sdkmanager "system-images;android-30;default;x86_64"
+/opt/android/sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-33"
+/opt/android/sdk/cmdline-tools/latest/bin/sdkmanager "system-images;android-33;google_apis_playstore;x86_64"
 ```
 
 Now an [Android Virtual Device
@@ -235,7 +235,7 @@ the system image provided above and a Pixel 5 device:
 
 ```
 /opt/android/sdk/cmdline-tools/latest/bin/avdmanager create avd --name test \
-  --package "system-images;android-30;default;x86_64" --device pixel_5
+  --package "system-images;android-33;google_apis_playstore;x86_64" --device pixel_5
 ```
 
 The AVD should be ready now and `avdmanager list avd` will show the details.
