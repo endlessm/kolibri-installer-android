@@ -17,8 +17,8 @@ else
 	PLATFORM := linux
 endif
 
-ANDROID_API := 31
-ANDROIDNDKVER := 23.2.8568313
+ANDROID_API := 33
+ANDROIDNDKVER := 25.0.8775105
 
 SDK := ${ANDROID_HOME}/android-sdk-$(PLATFORM)
 
@@ -58,6 +58,7 @@ clean:
 
 deepclean: clean
 	$(PYTHON_FOR_ANDROID) clean_dists
+	$(PYTHON_FOR_ANDROID) clean_builds
 	rm -r dist || true
 	yes y | $(DOCKER) system prune -a || true
 	rm build_docker 2> /dev/null
@@ -257,8 +258,8 @@ $(SDK)/cmdline-tools/latest/bin/sdkmanager:
 sdk: $(SDK)/cmdline-tools/latest/bin/sdkmanager
 	yes y | $(SDK)/cmdline-tools/latest/bin/sdkmanager "platform-tools"
 	yes y | $(SDK)/cmdline-tools/latest/bin/sdkmanager "platforms;android-$(ANDROID_API)"
-	yes y | $(SDK)/cmdline-tools/latest/bin/sdkmanager "system-images;android-$(ANDROID_API);default;x86_64"
-	yes y | $(SDK)/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3"
+	yes y | $(SDK)/cmdline-tools/latest/bin/sdkmanager "system-images;android-$(ANDROID_API);google_apis_playstore;x86_64"
+	yes y | $(SDK)/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2"
 	yes y | $(SDK)/cmdline-tools/latest/bin/sdkmanager "ndk;$(ANDROIDNDKVER)"
 	ln -sfT ndk/$(ANDROIDNDKVER) $(SDK)/ndk-bundle
 	@echo "Accepting all licenses"
