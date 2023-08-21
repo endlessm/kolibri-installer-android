@@ -58,6 +58,7 @@ clean:
 
 deepclean: clean
 	$(PYTHON_FOR_ANDROID) clean_dists
+	$(PYTHON_FOR_ANDROID) clean_builds
 	rm -r dist || true
 	yes y | $(DOCKER) system prune -a || true
 	rm build_docker 2> /dev/null
