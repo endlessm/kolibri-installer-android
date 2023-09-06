@@ -45,37 +45,21 @@ def set_app_key_cookie(url, app_key):
     KolibriAndroidHelper.getInstance().setAppKeyCookie(url, app_key)
 
 
-def _build_server_process_bus(application):
+def _build_kolibri_process_bus(application):
     from .kolibri_bus import AppPlugin
-    from .kolibri_bus import KolibriServerProcessBus
+    from .kolibri_bus import KolibriAppProcessBus
 
     AppPlugin.register_share_file_interface(share_by_intent)
 
-    kolibri_bus = KolibriServerProcessBus(enable_zeroconf=True)
+    kolibri_bus = KolibriAppProcessBus(enable_zeroconf=True)
     AppPlugin(kolibri_bus, application).subscribe()
 
     return kolibri_bus
 
 
-def _build_worker_process_bus(application):
-    from .kolibri_bus import KolibriWorkerProcessBus
-
-    return KolibriWorkerProcessBus()
-
-
 class MainActivity(BaseActivity):
     TO_RUN_IN_MAIN = None
-
-    # Kolibri process buses for the server and the task workers. Two
-    # buses are used so that the server bus can be quickly stopped when
-    # the activity is stopped. The worker bus is only stopped when the
-    # activity is destroyed.
-    #
-    # FIXME: Ideally these would be completely separate Android
-    # services, but pythonforandroid makes that hard to do.
-    _server_bus = None
-    _worker_bus = None
-
+    _kolibri_bus = None
     _saved_kolibri_path = None
     _last_kolibri_path = None
 
@@ -90,52 +74,40 @@ class MainActivity(BaseActivity):
     def on_activity_stopped(self, activity):
         super().on_activity_stopped(activity)
 
-        if self._server_bus is None:
+        if self._kolibri_bus is None:
             return
 
-        # Only the server bus is stopped here since the worker bus will
-        # block until any running tasks complete. This also allows
-        # running tasks to continue in the background.
-        if self._server_bus.can_transition("IDLE"):
+        if self._kolibri_bus.can_transition("IDLE"):
             # With some versions of Android, the onSaveInstanceState hook will
             # run after thsi one, so we need to keep track of the webview's
             # URL before switching to the loading screen.
             self._last_kolibri_path = self._get_current_kolibri_path()
             show_loading_page(LOADING_PAGE_URL)
-            self._server_bus.transition("IDLE")
-        elif self._server_bus.state != "IDLE":
+            self._kolibri_bus.transition("IDLE")
+        elif self._kolibri_bus.state != "IDLE":
             logging.warning(
-                f"Kolibri is unable to stop because its state is '{self._server_bus.state}"
+                f"Kolibri is unable to stop because its state is '{self._kolibri_bus.state}"
             )
-
-    def on_activity_destroyed(self, activity):
-        super().on_activity_destroyed(activity)
-
-        if self._worker_bus:
-            self._worker_bus.transition("EXITED")
-
-        if self._server_bus:
-            self._server_bus.transition("EXITED")
 
     def on_activity_resumed(self, activity):
         super().on_activity_resumed(activity)
 
-        if self._server_bus is None:
+        if self._kolibri_bus is None:
             return
 
-        if self._server_bus.can_transition("START"):
+        if self._kolibri_bus.can_transition("START"):
             self._last_kolibri_path = None
             show_loading_page(LOADING_PAGE_URL)
-            self._server_bus.transition("START")
-        elif self._server_bus.state != "START":
+            self._kolibri_bus.transition("START")
+        elif self._kolibri_bus.state != "START":
             logging.warning(
-                f"Kolibri is unable to start because its state is '{self._server_bus.state}'"
+                f"Kolibri is unable to start because its state is '{self._kolibri_bus.state}'"
             )
 
     def on_activity_save_instance_state(self, activity, out_state_bundle):
         super().on_activity_save_instance_state(activity, out_state_bundle)
 
-        if self._server_bus is None:
+        if self._kolibri_bus is None:
             return
 
         kolibri_path = self._last_kolibri_path or self._get_current_kolibri_path()
@@ -156,7 +128,7 @@ class MainActivity(BaseActivity):
         current_url = KolibriAndroidHelper.getInstance().getUrl()
         self._last_url = None
 
-        if self._server_bus.is_kolibri_url(current_url):
+        if self._kolibri_bus.is_kolibri_url(current_url):
             return urlparse(current_url)._replace(scheme="", netloc="").geturl()
         else:
             return None
@@ -185,8 +157,8 @@ class MainActivity(BaseActivity):
 
         init_kolibri(debug=True)
 
-        self._server_bus = _build_server_process_bus(self)
-        app_key = self._server_bus.get_app_key()
+        self._kolibri_bus = _build_kolibri_process_bus(self)
+        app_key = self._kolibri_bus.get_app_key()
         logging.info(f"Setting app key cookie: {app_key}")
         # Android's CookieManager.setCookie awkwardly asks for a full URL, but
         # cookies generally apply across all ports for a given hostname, so it
@@ -194,16 +166,10 @@ class MainActivity(BaseActivity):
         # port.
         set_app_key_cookie("http://127.0.0.1", app_key)
 
-        self._worker_bus = _build_worker_process_bus(self)
-
-        # Start the worker bus but don't block on it.
-        logging.info("Starting kolibri workers.")
-        self._worker_bus.graceful()
-
         # start kolibri server
         logging.info("Starting kolibri server.")
 
-        self._server_bus.run()
+        self._kolibri_bus.run()
 
     def _on_start_with_network(self):
         self.TO_RUN_IN_MAIN = self.start_kolibri

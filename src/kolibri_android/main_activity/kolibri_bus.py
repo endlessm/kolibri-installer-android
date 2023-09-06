@@ -12,11 +12,11 @@ from kolibri.utils.server import ZipContentServerPlugin
 from magicbus.plugins import SimplePlugin
 
 
-class KolibriServerProcessBus(BaseKolibriProcessBus):
-    """Process bus running Kolibri servers"""
-
+class KolibriAppProcessBus(BaseKolibriProcessBus):
     def __init__(self, *args, enable_zeroconf=True, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(KolibriAppProcessBus, self).__init__(*args, **kwargs)
+
+        ServicesPlugin(self).subscribe()
 
         if enable_zeroconf:
             ZeroConfPlugin(self, self.port).subscribe()
@@ -54,15 +54,6 @@ class KolibriServerProcessBus(BaseKolibriProcessBus):
 
     def can_transition(self, to_state: str) -> bool:
         return (self.state, to_state) in self.transitions
-
-
-class KolibriWorkerProcessBus(BaseKolibriProcessBus):
-    """Process bus running Kolibri workers"""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        ServicesPlugin(self).subscribe()
 
 
 class AppPlugin(SimplePlugin):
