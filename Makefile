@@ -135,16 +135,13 @@ src/apps-bundle: clean-apps-bundle apps-bundle.zip
 
 .PHONY: collections.zip
 collections.zip:
-	wget -N https://github.com/endlessm/endless-key-collections/archive/refs/heads/main.zip
-	mv main.zip collections.zip
+	wget -N https://github.com/endlessm/endless-key-collections/releases/latest/download/collections.zip
 
 clean-collections:
 	- rm -rf src/collections
 
 src/collections: clean-collections collections.zip
-	unzip -qo collections.zip
-	mv endless-key-collections-main/json/ src/collections
-	rm -rf endless-key-collections-main
+	unzip -qo collections.zip -d src/collections
 
 clean-local-kolibri-explore-plugin:
 	# The * is to also remove the VERSION.dist-info directory:
