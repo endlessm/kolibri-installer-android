@@ -41,10 +41,12 @@ pipeline {
         stage('Distro') {
             steps {
                 // p4a's cache invalidation has tons of bugs. Clean the
-                // builds and distributions to ensure we get all the
-                // current code copied into it.
+                // builds to ensure we get all the current code copied
+                // into it.
                 sh 'p4a clean builds'
-                sh 'p4a clean dists'
+                // Clean first to ensure we're downloading current
+                // assets.
+                sh 'make clean'
                 sh 'make p4a_android_distro'
             }
         }

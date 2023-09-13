@@ -52,31 +52,45 @@ needs-android-dirs:
 	$(MAKE) guard-ANDROIDSDK
 	$(MAKE) guard-ANDROIDNDK
 
-# Clear out apks
-clean:
-	- rm -rf dist/*.apk dist/*.aab dist/version.json src/kolibri tmpenv
+# Clear out downloaded and built assets
+CLEAN_DEPS = \
+	clean-kolibri \
+	clean-apps-bundle \
+	clean-collections \
+	clean-local-kolibri-explore-plugin \
+	clean-welcomeScreen
+CLEAN_FILES = \
+	dist \
+	tmpenv \
+	apps-bundle.zip \
+	collections.zip \
+	$(EXPLOREPLUGIN_WHEEL)
 
-deepclean: clean
-	$(PYTHON_FOR_ANDROID) clean_dists
-	$(PYTHON_FOR_ANDROID) clean_builds
-	rm -r dist || true
-	yes y | $(DOCKER) system prune -a || true
-	rm build_docker 2> /dev/null
+clean: $(CLEAN_DEPS)
+	- rm -rf $(CLEAN_FILES)
+	- find src -type f -name '*.pyc' -delete
+	- $(PYTHON_FOR_ANDROID) clean_dists
+
+deepclean: clean clean-whl
+	- $(PYTHON_FOR_ANDROID) clean_builds
+	- yes y | $(DOCKER) system prune -a
 
 .PHONY: clean-whl
 clean-whl:
 	rm -rf whl
-	mkdir whl
 
 .PHONY: get-whl
 get-whl: clean-whl
+	mkdir -p whl
 	wget -O whl/kolibri.whl "${whl}"
 
+clean-kolibri:
+	- rm -rf src/kolibri
+
 # Extract the whl file
-src/kolibri: clean
-	rm -r src/kolibri 2> /dev/null || true
+src/kolibri: clean-kolibri
 	unzip -qo whl/kolibri.whl "kolibri/*" -x "kolibri/dist/py2only*" -d src/
-	# Cleanup:
+# Cleanup:
 	./scripts/cleanup-unused-locales.py -l \
 	src/kolibri/locale \
 	src/kolibri/dist/django/conf/locale \
@@ -113,8 +127,8 @@ src/kolibri: clean
 	src/kolibri/dist/past/tests \
 	src/kolibri/dist/sqlalchemy/testing
 	find src/kolibri -name '*.js.map' -exec rm '{}' '+'
-	# End of cleanup.
-	# patch Django to allow migrations to be pyc files, as p4a compiles and deletes the originals
+# End of cleanup.
+# patch Django to allow migrations to be pyc files, as p4a compiles and deletes the originals
 	sed -i 's/if name.endswith(".py"):/if name.endswith(".py") or name.endswith(".pyc"):/g' src/kolibri/dist/django/db/migrations/loader.py
 
 .PHONY: apps-bundle.zip
@@ -141,9 +155,10 @@ clean-collections:
 src/collections: clean-collections collections.zip
 	unzip -qo collections.zip -d src/collections
 
+# The * is to also remove the VERSION.dist-info directory:
 clean-local-kolibri-explore-plugin:
-	# The * is to also remove the VERSION.dist-info directory:
 	- rm -rf ${EXPLOREPLUGIN_TARGET}/kolibri_explore_plugin*
+	- rmdir --ignore-fail-on-non-empty ${EXPLOREPLUGIN_TARGET}
 
 .PHONY: local-kolibri-explore-plugin
 local-kolibri-explore-plugin: clean-local-kolibri-explore-plugin
@@ -169,6 +184,7 @@ needs-version: src/kolibri local-kolibri-explore-plugin
 	$(if $(EK_VERSION), ,$(error EK_VERSION not defined))
 
 dist/version.json: needs-version
+	rm -f $@
 	mkdir -p dist
 	echo '{"versionCode": "$(VERSION_CODE)", "versionName": "$(VERSION_NAME)", "ekVersion": "$(EK_VERSION)"}' > $@
 
@@ -188,6 +204,7 @@ kolibri.apk: $(DIST_DEPS)
 	$(MAKE) guard-P4A_RELEASE_KEYALIAS
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE_PASSWD
 	$(MAKE) guard-P4A_RELEASE_KEYALIAS_PASSWD
+	rm -f dist/kolibri-release-*.apk
 	@echo "--- :android: Build APK"
 	$(P4A) apk --release --sign $(ARCH_OPTIONS) --version="$(VERSION_NAME)" --numeric-version=$(VERSION_CODE)
 	mkdir -p dist
@@ -196,6 +213,7 @@ kolibri.apk: $(DIST_DEPS)
 .PHONY: kolibri.apk.unsigned
 # Build the unsigned debug version of the apk
 kolibri.apk.unsigned: $(DIST_DEPS)
+	rm -f dist/kolibri-debug-*.apk
 	@echo "--- :android: Build APK (unsigned)"
 	$(P4A) apk $(ARCH_OPTIONS) --version="$(VERSION_NAME)" --numeric-version=$(VERSION_CODE)
 	mkdir -p dist
@@ -208,6 +226,7 @@ kolibri.aab: $(DIST_DEPS)
 	$(MAKE) guard-P4A_RELEASE_KEYALIAS
 	$(MAKE) guard-P4A_RELEASE_KEYSTORE_PASSWD
 	$(MAKE) guard-P4A_RELEASE_KEYALIAS_PASSWD
+	rm -f dist/kolibri-release-*.aab
 	@echo "--- :android: Build AAB"
 	$(P4A) aab --release --sign $(ARCH_OPTIONS) --version="$(VERSION_NAME)" --numeric-version=$(VERSION_CODE)
 	mkdir -p dist
