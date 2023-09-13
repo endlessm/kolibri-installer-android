@@ -175,4 +175,4 @@ class MainActivity(BaseActivity):
             logging.info("First time")
         else:
             logging.info("Starting network mode")
-            self.TO_RUN_IN_MAIN = self.start_kolibri
+        self.TO_RUN_IN_MAIN = self.start_kolibri
