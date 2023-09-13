@@ -58,7 +58,7 @@ CLEAN_DEPS = \
 	clean-apps-bundle \
 	clean-collections \
 	clean-local-kolibri-explore-plugin \
-	clean-welcomeScreen
+	clean-loadingScreen
 CLEAN_FILES = \
 	dist \
 	tmpenv \
@@ -164,11 +164,11 @@ clean-local-kolibri-explore-plugin:
 local-kolibri-explore-plugin: clean-local-kolibri-explore-plugin
 	pip install --target=${EXPLOREPLUGIN_TARGET} --no-deps ${EXPLOREPLUGIN_WHEEL}
 
-clean-welcomeScreen:
-	- rm -rf assets/welcomeScreen
+clean-loadingScreen:
+	- rm -rf assets/loadingScreen
 
-assets/welcomeScreen: clean-welcomeScreen local-kolibri-explore-plugin
-	cp -r ${EXPLOREPLUGIN_TARGET}/kolibri_explore_plugin/welcomeScreen/ assets/
+assets/loadingScreen: clean-loadingScreen local-kolibri-explore-plugin
+	cp -r ${EXPLOREPLUGIN_TARGET}/kolibri_explore_plugin/loadingScreen/ assets/
 
 .PHONY: p4a_android_distro
 p4a_android_distro: needs-android-dirs
@@ -193,7 +193,7 @@ DIST_DEPS = \
 	src/kolibri \
 	src/apps-bundle \
 	src/collections \
-	assets/welcomeScreen \
+	assets/loadingScreen \
 	needs-version \
 	dist/version.json
 

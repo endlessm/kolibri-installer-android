@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.view.View;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -13,7 +12,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.ConsoleMessage;
 import android.widget.FrameLayout;
-import android.webkit.JavascriptInterface;
 import org.kivy.android.PythonActivity;
 
 import android.util.Log;
@@ -79,7 +77,7 @@ public class KolibriAndroidHelper {
         mActivity.mOpenExternalLinksInBrowser = true;
 
         mLoadingWebView.setWebViewClient(new WebViewClient() {
-            private boolean mInWelcome = false;
+            private boolean mInLoading = false;
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
@@ -90,25 +88,12 @@ public class KolibriAndroidHelper {
             public void onPageFinished(WebView view, String url) {
                 Log.v(TAG, "mLoadingWebView onPageFinished " + url);
 
-                mLoadingWebView.evaluateJavascript("WelcomeApp.setNeedsPermission(true)", null);
-
-                if (!mInWelcome && url.contains("welcomeScreen/index.html")) {
+                if (!mInLoading && url.contains("loadingScreen/index.html")) {
                     loadingReady.run();
-                    mInWelcome = true;
+                    mInLoading = true;
                 }
             }
         });
-        mLoadingWebView.addJavascriptInterface(new Object() {
-            @JavascriptInterface
-            public void startWithNetwork(String packId) {
-                SharedPreferences sharedPref =  mActivity.getSharedPreferences(mActivity.getPackageName(), Context.MODE_PRIVATE);
-                SharedPreferences.Editor editor = sharedPref.edit();
-                editor.putString("initial_content_pack_id", packId);
-                editor.commit();
-                Log.v(TAG, packId);
-                startWithNetwork.run();
-            }
-        } , "WelcomeWrapper");
 
         mLoadingWebView.getSettings().setAllowFileAccess(true);
 
