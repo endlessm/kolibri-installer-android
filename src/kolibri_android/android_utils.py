@@ -169,13 +169,6 @@ def get_log_root():
     return os.path.join(get_home_folder(), "logs")
 
 
-def get_initial_content_pack_id():
-    preferences = get_preferences()
-    pack_id = preferences.getString("initial_content_pack_id", None)
-    logger.debug("Initial content pack ID: %s", pack_id)
-    return pack_id
-
-
 def show_toast(context, msg, duration):
     """Helper to create and show a Toast message"""
 

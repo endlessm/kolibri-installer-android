@@ -15,8 +15,8 @@ from ..runnable import Runnable
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
 KolibriAndroidHelper = autoclass("org.learningequality.KolibriAndroidHelper")
 
-INITIAL_LOADING_PAGE_URL = "file:///android_asset/welcomeScreen/index.html"
-LOADING_PAGE_URL = "file:///android_asset/welcomeScreen/index.html#/loading/default"
+INITIAL_LOADING_PAGE_URL = "file:///android_asset/loadingScreen/index.html"
+LOADING_PAGE_URL = "file:///android_asset/loadingScreen/index.html#/loading/default"
 
 
 @Runnable
@@ -33,11 +33,6 @@ def replace_url_in_webview(url):
 @Runnable
 def show_loading_page(url):
     KolibriAndroidHelper.getInstance().showLoadingPage(url)
-
-
-@Runnable
-def evaluate_javascript_in_loading_webview(js_code):
-    KolibriAndroidHelper.getInstance().mLoadingWebView.evaluateJavascript(js_code, None)
 
 
 @Runnable
@@ -178,7 +173,6 @@ class MainActivity(BaseActivity):
         startup_state = StartupState.get_current_state()
         if startup_state == StartupState.FIRST_TIME:
             logging.info("First time")
-            evaluate_javascript_in_loading_webview("WelcomeApp.showWelcome()")
         else:
             logging.info("Starting network mode")
-            self.TO_RUN_IN_MAIN = self.start_kolibri
+        self.TO_RUN_IN_MAIN = self.start_kolibri

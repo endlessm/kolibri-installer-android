@@ -5,7 +5,6 @@ from importlib.util import find_spec
 
 from .android_utils import get_android_node_id
 from .android_utils import get_home_folder
-from .android_utils import get_initial_content_pack_id
 from .android_utils import get_logging_config
 from .android_utils import get_signature_key_issuing_organization
 from .android_utils import get_timezone_name
@@ -38,7 +37,6 @@ def init_kolibri(**kwargs):
     logger.info("Initializing Kolibri and running any upgrade routines")
 
     _init_kolibri_env()
-    _update_explore_plugin_options()
 
     _monkeypatch_kolibri_logging()
 
@@ -96,14 +94,6 @@ def _init_kolibri_env():
     # id that is known to be hardcoded in many devices.
     if node_id and len(node_id) >= 16 and node_id != "9774d56d682e549c":
         os.environ["MORANGO_NODE_ID"] = node_id
-
-
-def _update_explore_plugin_options():
-    pack_id = get_initial_content_pack_id()
-    if pack_id is not None:
-        os.environ["KOLIBRI_INITIAL_CONTENT_PACK"] = pack_id
-    else:
-        os.environ["KOLIBRI_USE_EK_IGUANA_PAGE"] = "1"
 
 
 def _monkeypatch_kolibri_logging():
