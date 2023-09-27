@@ -27,5 +27,11 @@ tmpenv/
 venv/
 .venv/
 
+# Gradle and Android Studio
+.gradle/
+.idea/
+build/
+local.properties
+
 *.apk
 .env
