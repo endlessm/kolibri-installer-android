@@ -184,6 +184,23 @@ fun createVersionTask(variant: Variant): TaskProvider<Exec> {
     }
 }
 
+// Create a task per variant that prunes unwanted files from the extracted
+// python packages.
+fun createPruneTask(variant: Variant): TaskProvider<Exec> {
+    val taskVariant = variant.name.replaceFirstChar { it.uppercase() }
+    return tasks.register<Exec>("prune${taskVariant}PythonPackages") {
+        val pkgroot = layout.buildDirectory.dir("python/pip/${variant.name}")
+        val report = layout.buildDirectory.file("outputs/logs/prune-${variant.name}-report.txt")
+        commandLine(
+            "./scripts/prunepackages.py",
+            "--pkgroot",
+            pkgroot.get().asFile.path,
+            "--report",
+            report.get().asFile.path,
+        )
+    }
+}
+
 // Connect our tasks to external tasks.
 val variants = ArrayList<Variant>()
 
@@ -233,11 +250,26 @@ project.afterEvaluate {
         variants.forEach { variant ->
             val taskVariant = variant.name.replaceFirstChar { it.uppercase() }
             val requirementsTask = tasks.named("generate${taskVariant}PythonRequirements")
+            val requirementsAssetsTask = tasks.named(
+                "generate${taskVariant}PythonRequirementsAssets",
+            )
 
             // Make the version task depend on the extracted package files.
             val versionTask = tasks.named("output${taskVariant}Version")
             versionTask.configure {
                 inputs.files(requirementsTask)
+            }
+
+            // Order the pruning task after the packages have been extracted
+            // but before they've been zipped into assets.
+            val pruneTask = createPruneTask(variant)
+            pruneTask.configure {
+                inputs.files(requirementsTask)
+            }
+            requirementsAssetsTask.configure {
+                // dependsOn is used here instead of wiring the prune task
+                // outputs since there aren't any outputs.
+                dependsOn(pruneTask)
             }
         }
     }
