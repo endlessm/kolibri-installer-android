@@ -14,7 +14,8 @@
                       android:xlargeScreens="true"
                       />
 
-    <application android:label="@string/app_name"
+    <application android:name="com.chaquo.python.android.PyApplication"
+                 android:label="@string/app_name"
                  android:icon="@mipmap/icon"
                  android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
                  android:allowBackup="true"

@@ -1,5 +1,10 @@
 pluginManagement {
     repositories {
+        // Forked repo with unreleased chaquopy
+        // FIXME: Remove this when 15.0.1 is released and published
+        maven {
+            url = uri("https://dbnicholson.github.io/chaquopy/")
+        }
         gradlePluginPortal()
         google()
         mavenCentral()

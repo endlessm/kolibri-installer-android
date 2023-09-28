@@ -7,7 +7,23 @@ import com.android.build.api.dsl.ManagedVirtualDevice
 // Gradle plugins
 plugins {
     id("com.android.application")
+    id("com.chaquo.python")
 }
+
+// Configure package versions and/or URLs from properties so they're easier to update or override.
+val kolibriVersion: String by project
+val kolibriUrl: String by project
+val kolibriSpec = if (!kolibriUrl.isBlank()) kolibriUrl else "kolibri==$kolibriVersion"
+val exploreVersion: String by project
+val exploreUrl: String by project
+val exploreSpec = if (!exploreUrl.isBlank()) {
+    exploreUrl
+} else {
+    "kolibri-explore-plugin==$exploreVersion"
+}
+val zimVersion: String by project
+val zimUrl: String by project
+val zimSpec = if (!zimUrl.isBlank()) zimUrl else "kolibri-zim-plugin==$zimVersion"
 
 // Android (AGP) configuration
 // https://developer.android.com/build/
@@ -63,6 +79,50 @@ android {
                 }
             }
         }
+    }
+}
+
+// Chaquopy configuration
+// https://chaquo.com/chaquopy/doc/15.0/android.html
+chaquopy {
+    defaultConfig {
+        // Python version
+        version = "3.9"
+
+        // Packages to install with pip.
+        pip {
+            install(kolibriSpec)
+            install(exploreSpec)
+            install(zimSpec)
+        }
+
+        // Django migrations in 1.11 work by looking for modules in the filesystem, so any packages
+        // containing them need to be extracted rather than loaded directly from the asset zip file.
+        // Unfortunately, chaquopy will include both the compiled and non-compiled modules in this
+        // case. For the giant kolibri wheel that's quite a bit of bloat, so only choose migrations
+        // packages. When upgrading kolibri, check this is still correct.
+        //
+        // https://github.com/chaquo/chaquopy/issues/978
+        extractPackages("kolibri.core.analytics.migrations")
+        extractPackages("kolibri.core.auth.migrations")
+        extractPackages("kolibri.core.bookmarks.migrations")
+        extractPackages("kolibri.core.content.migrations")
+        extractPackages("kolibri.core.device.migrations")
+        extractPackages("kolibri.core.discovery.migrations")
+        extractPackages("kolibri.core.exams.migrations")
+        extractPackages("kolibri.core.lessons.migrations")
+        extractPackages("kolibri.core.logger.migrations")
+        extractPackages("kolibri.core.notifications.migrations")
+        extractPackages("kolibri.dist.django.contrib.admin.migrations")
+        extractPackages("kolibri.dist.django.contrib.auth.migrations")
+        extractPackages("kolibri.dist.django.contrib.contenttypes.migrations")
+        extractPackages("kolibri.dist.django.contrib.flatpages.migrations")
+        extractPackages("kolibri.dist.django.contrib.redirects.migrations")
+        extractPackages("kolibri.dist.django.contrib.sessions.migrations")
+        extractPackages("kolibri.dist.django.contrib.sites.migrations")
+        extractPackages("kolibri.dist.morango.migrations")
+        extractPackages("kolibri.dist.rest_framework.authtoken.migrations")
+        extractPackages("kolibri_explore_plugin.migrations")
     }
 }
 
