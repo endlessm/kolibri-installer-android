@@ -3,6 +3,10 @@
 // https://docs.gradle.org/current/kotlin-dsl/index.html
 
 import com.android.build.api.dsl.ManagedVirtualDevice
+import com.android.build.api.variant.Variant
+import com.android.build.api.variant.VariantOutputConfiguration.OutputType
+import groovy.json.JsonSlurper
+import java.time.Instant
 
 // Gradle plugins
 plugins {
@@ -25,6 +29,20 @@ val zimVersion: String by project
 val zimUrl: String by project
 val zimSpec = if (!zimUrl.isBlank()) zimUrl else "kolibri-zim-plugin==$zimVersion"
 
+// Configure the app's versionCode. We do this once here so that all
+// variants use the same version.
+val versionCode: String by project
+var versionCodeValue: Int
+if (!versionCode.isBlank()) {
+    logger.info("Using versionCode property")
+    versionCodeValue = versionCode.toInt()
+} else {
+    // Use the current time in seconds.
+    logger.info("Using current time for versionCode")
+    versionCodeValue = Instant.now().getEpochSecond().toInt()
+}
+logger.quiet("Using versionCode {}", versionCodeValue)
+
 // Android (AGP) configuration
 // https://developer.android.com/build/
 // https://developer.android.com/reference/tools/gradle-api
@@ -41,8 +59,6 @@ android {
 
         targetSdk = 33
         minSdk = 24
-        versionCode = 1
-        versionName = "1.0"
 
         ndk {
             abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
@@ -140,4 +156,89 @@ dependencies {
 tasks.withType<JavaCompile>().configureEach {
     options.setDeprecation(true)
     options.compilerArgs.add("-Xlint:unchecked")
+}
+
+// Tasks
+// https://docs.gradle.org/current/userguide/more_about_tasks.html
+
+// Create a task per variant that generates a JSON file with version
+// names that will be used to set versionName below. The JSON file is
+// also used by the upload job to read the various versions, so the
+// versionCode is included in it.
+fun createVersionTask(variant: Variant): TaskProvider<Exec> {
+    val taskVariant = variant.name.replaceFirstChar { it.uppercase() }
+    return tasks.register<Exec>("output${taskVariant}Version") {
+        val pkgdir = layout.buildDirectory.dir("python/pip/${variant.name}/common")
+        val output = layout.buildDirectory.file("outputs/version-${variant.name}.json")
+        commandLine(
+            "./scripts/versions.py",
+            "--version-code",
+            versionCodeValue.toString(),
+            "--pkgdir",
+            pkgdir.get().asFile.path,
+            "--output",
+            output.get().asFile.path,
+        )
+        inputs.dir(pkgdir)
+        outputs.file(output)
+    }
+}
+
+// Connect our tasks to external tasks.
+val variants = ArrayList<Variant>()
+
+// AGP extension API
+// https://developer.android.com/build/extend-agp
+// AGP extension API
+// https://developer.android.com/build/extend-agp
+androidComponents {
+    onVariants { variant ->
+        // Keep track of the variant for use in afterEvalute.
+        variants.add(variant)
+
+        // Set versionCode and versionName.
+        val versionTask = createVersionTask(variant)
+        val versionName = versionTask.map { task ->
+            val versionFile = task.outputs.files.singleFile
+
+            // It would be better to use the type safe kotlin JSON serialization library to parse,
+            // but gradle doesn't know to include the library at build time unless you use a
+            // separate buildSrc project. Just use the groovy JSON library with unsafe casts for
+            // now.
+            val slurper = JsonSlurper()
+
+            @Suppress("UNCHECKED_CAST")
+            val versionData = slurper.parse(versionFile) as Map<String, String>
+            versionData.getValue("versionName")
+        }
+        variant.outputs
+            .filter { it.outputType == OutputType.SINGLE }
+            .forEach {
+                it.versionCode.set(versionCodeValue)
+                it.versionName.set(versionName)
+            }
+    }
+}
+
+// In order to support older AGP versions, chaquopy creates its tasks from afterEvaluate. In order
+// to hook into those, we need to use an action from an inner afterEvaluate so that it runs after
+// all previously added afterEvaluate actions complete.
+//
+// https://docs.gradle.org/current/kotlin-dsl/gradle/org.gradle.api/-project/after-evaluate.html
+project.afterEvaluate {
+    project.afterEvaluate {
+
+        // Python package assets are created per build variant, so any tasks that depend on those
+        // also have to be created for each variant.
+        variants.forEach { variant ->
+            val taskVariant = variant.name.replaceFirstChar { it.uppercase() }
+            val requirementsTask = tasks.named("generate${taskVariant}PythonRequirements")
+
+            // Make the version task depend on the extracted package files.
+            val versionTask = tasks.named("output${taskVariant}Version")
+            versionTask.configure {
+                inputs.files(requirementsTask)
+            }
+        }
+    }
 }
