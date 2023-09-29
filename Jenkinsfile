@@ -32,6 +32,12 @@ pipeline {
     }
 
     stages {
+        stage('Lint') {
+            steps {
+                sh 'pre-commit run --all-files --show-diff-on-failure'
+            }
+        }
+
         stage('Kolibri wheel') {
             steps {
                 sh 'make get-whl whl="$KOLIBRI_WHL_URL"'

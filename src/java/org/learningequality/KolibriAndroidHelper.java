@@ -1,22 +1,17 @@
 package org.learningequality;
 
-import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 import android.view.View;
-import android.content.Context;
+import android.webkit.ConsoleMessage;
 import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
-import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.webkit.ConsoleMessage;
 import android.widget.FrameLayout;
+
 import org.kivy.android.PythonActivity;
-
-import android.util.Log;
-import java.lang.Runnable;
-
 
 public class KolibriAndroidHelper {
     private static final String TAG = "EndlessKey";
@@ -76,58 +71,60 @@ public class KolibriAndroidHelper {
 
         mActivity.mOpenExternalLinksInBrowser = true;
 
-        mLoadingWebView.setWebViewClient(new WebViewClient() {
-            private boolean mInLoading = false;
+        mLoadingWebView.setWebViewClient(
+                new WebViewClient() {
+                    private boolean mInLoading = false;
 
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                return mActivity.tryOpenExternalLink(url);
-            }
+                    @Override
+                    public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                        return mActivity.tryOpenExternalLink(url);
+                    }
 
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                Log.v(TAG, "mLoadingWebView onPageFinished " + url);
+                    @Override
+                    public void onPageFinished(WebView view, String url) {
+                        Log.v(TAG, "mLoadingWebView onPageFinished " + url);
 
-                if (!mInLoading && url.contains("loadingScreen/index.html")) {
-                    loadingReady.run();
-                    mInLoading = true;
-                }
-            }
-        });
+                        if (!mInLoading && url.contains("loadingScreen/index.html")) {
+                            loadingReady.run();
+                            mInLoading = true;
+                        }
+                    }
+                });
 
         mLoadingWebView.getSettings().setAllowFileAccess(true);
 
         mMainWebView.setWebContentsDebuggingEnabled(true);
-        mMainWebView.setWebViewClient(new WebViewClient() {
-            boolean isRedirected = false;
+        mMainWebView.setWebViewClient(
+                new WebViewClient() {
+                    boolean isRedirected = false;
 
-            @Override
-            public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                isRedirected = false;
-            }
+                    @Override
+                    public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                        isRedirected = false;
+                    }
 
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                isRedirected = true;
-                return mActivity.tryOpenExternalLink(url);
-            }
+                    @Override
+                    public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                        isRedirected = true;
+                        return mActivity.tryOpenExternalLink(url);
+                    }
 
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                if (isRedirected) {
-                    return;
-                }
+                    @Override
+                    public void onPageFinished(WebView view, String url) {
+                        if (isRedirected) {
+                            return;
+                        }
 
-                Log.i(TAG, "mMainWebView loading finished " + url);
+                        Log.i(TAG, "mMainWebView loading finished " + url);
 
-                if (clearHistoryOnPageFinished) {
-                    mMainWebView.clearHistory();
-                    clearHistoryOnPageFinished = false;
-                }
+                        if (clearHistoryOnPageFinished) {
+                            mMainWebView.clearHistory();
+                            clearHistoryOnPageFinished = false;
+                        }
 
-                mActivity.displayMainWebView();
-            }
-        });
+                        mActivity.displayMainWebView();
+                    }
+                });
         mMainWebView.setWebChromeClient(mChrome);
 
         mMainWebView.getSettings().setAllowFileAccess(true);
@@ -136,11 +133,14 @@ public class KolibriAndroidHelper {
     }
 
     private void enableDesktopMode() {
-        mMainWebView.getSettings().setUserAgentString(
-            mMainWebView.getSettings().getUserAgentString()
-                .replace("Android", "Human")
-                .replaceFirst("Version\\/\\d+\\.\\d+", "")
-        );
+        mMainWebView
+                .getSettings()
+                .setUserAgentString(
+                        mMainWebView
+                                .getSettings()
+                                .getUserAgentString()
+                                .replace("Android", "Human")
+                                .replaceFirst("Version\\/\\d+\\.\\d+", ""));
     }
 
     private class MyChrome extends WebChromeClient {
@@ -156,42 +156,49 @@ public class KolibriAndroidHelper {
             mActivity = activity;
         }
 
-        public Bitmap getDefaultVideoPoster()
-        {
+        public Bitmap getDefaultVideoPoster() {
             if (mCustomView == null) {
                 return null;
             }
-            return BitmapFactory.decodeResource(mActivity.getApplicationContext().getResources(), 2130837573);
+            return BitmapFactory.decodeResource(
+                    mActivity.getApplicationContext().getResources(), 2130837573);
         }
 
-        public void onHideCustomView()
-        {
-            ((FrameLayout)mActivity.getWindow().getDecorView()).removeView(this.mCustomView);
+        public void onHideCustomView() {
+            ((FrameLayout) mActivity.getWindow().getDecorView()).removeView(this.mCustomView);
             this.mCustomView = null;
-            mActivity.getWindow().getDecorView().setSystemUiVisibility(this.mOriginalSystemUiVisibility);
+            mActivity
+                    .getWindow()
+                    .getDecorView()
+                    .setSystemUiVisibility(this.mOriginalSystemUiVisibility);
             mActivity.setRequestedOrientation(this.mOriginalOrientation);
             this.mCustomViewCallback.onCustomViewHidden();
             this.mCustomViewCallback = null;
         }
 
-        public void onShowCustomView(View paramView, WebChromeClient.CustomViewCallback paramCustomViewCallback)
-        {
-            if (this.mCustomView != null)
-            {
+        public void onShowCustomView(
+                View paramView, WebChromeClient.CustomViewCallback paramCustomViewCallback) {
+            if (this.mCustomView != null) {
                 onHideCustomView();
                 return;
             }
             this.mCustomView = paramView;
-            this.mOriginalSystemUiVisibility = mActivity.getWindow().getDecorView().getSystemUiVisibility();
+            this.mOriginalSystemUiVisibility =
+                    mActivity.getWindow().getDecorView().getSystemUiVisibility();
             this.mOriginalOrientation = mActivity.getRequestedOrientation();
             this.mCustomViewCallback = paramCustomViewCallback;
-            ((FrameLayout)mActivity.getWindow().getDecorView()).addView(this.mCustomView, new FrameLayout.LayoutParams(-1, -1));
-            mActivity.getWindow().getDecorView().setSystemUiVisibility(3846 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+            ((FrameLayout) mActivity.getWindow().getDecorView())
+                    .addView(this.mCustomView, new FrameLayout.LayoutParams(-1, -1));
+            mActivity
+                    .getWindow()
+                    .getDecorView()
+                    .setSystemUiVisibility(3846 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         }
 
         @Override
         public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
-            String logMessage = consoleMessage.message() + " -- Source: " + consoleMessage.sourceId();
+            String logMessage =
+                    consoleMessage.message() + " -- Source: " + consoleMessage.sourceId();
             if (consoleMessage.messageLevel() == ConsoleMessage.MessageLevel.ERROR) {
                 Log.e(WEB_CONSOLE_TAG, logMessage);
             } else {
@@ -199,6 +206,5 @@ public class KolibriAndroidHelper {
             }
             return true;
         }
-
     }
 }
