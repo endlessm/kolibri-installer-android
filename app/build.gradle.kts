@@ -13,6 +13,7 @@ import java.time.Instant
 plugins {
     id("com.android.application")
     id("com.chaquo.python")
+    id("com.google.gms.google-services")
     id("de.undercouch.download")
 }
 
