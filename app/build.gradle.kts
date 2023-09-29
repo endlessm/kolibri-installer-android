@@ -230,12 +230,32 @@ fun createPruneTask(variant: Variant): TaskProvider<Exec> {
     }
 }
 
-// Download app-bundle.zip
-tasks.register<Download>("downloadAppsBundle") {
+// Download and extract apps-bundle.zip into the python source directory. Chaquopy will
+// automatically extract its data files to the filesystem at runtime.
+val appsBundleDirectory: Directory = layout.projectDirectory.dir(
+    "src/main/python/kolibri_android/apps",
+)
+
+val downloadAppsBundleTask = tasks.register<Download>("downloadAppsBundle") {
     src(appsBundleDownloadUrl)
     dest(layout.buildDirectory.file("download/apps-bundle-$exploreVersion.zip"))
     onlyIfModified(true)
     useETag(true)
+}
+
+val extractAppsBundleTask = tasks.register<Copy>("extractAppsBundle") {
+    from(zipTree(downloadAppsBundleTask.map { it.dest })) {
+        // Strip the embedded subdirectory so we can extract to an explicit subdirectory.
+        eachFile {
+            relativePath = RelativePath(true, *relativePath.segments.drop(1).toTypedArray())
+        }
+        includeEmptyDirs = false
+    }
+    into(appsBundleDirectory)
+}
+
+val cleanAppsBundleTask = tasks.register<Delete>("cleanAppsBundle") {
+    delete(appsBundleDirectory)
 }
 
 // Download loading-screen.zip
@@ -246,12 +266,26 @@ val downloadLoadingScreenTask = tasks.register<Download>("downloadLoadingScreen"
     useETag(true)
 }
 
-// Download collections.zip
-tasks.register<Download>("downloadCollections") {
+// Download and extract collections.zip into the python source directory. Chaquopy will
+// automatically extract its data files to the filesystem at runtime.
+val collectionsDirectory: Directory = layout.projectDirectory.dir(
+    "src/main/python/kolibri_android/collections",
+)
+
+val downloadCollectionsTask = tasks.register<Download>("downloadCollections") {
     src(collectionsDownloadUrl)
     dest(layout.buildDirectory.file("download/collections-$collectionsVersion.zip"))
     onlyIfModified(true)
     useETag(true)
+}
+
+val extractCollectionsTask = tasks.register<Copy>("extractCollections") {
+    from(zipTree(downloadCollectionsTask.map { it.dest }))
+    into(collectionsDirectory)
+}
+
+val cleanCollectionsTask = tasks.register<Delete>("cleanCollections") {
+    delete(collectionsDirectory)
 }
 
 // Task class for collecting build assets. This needs to be a class that accepts a DirectoryProperty
@@ -345,6 +379,12 @@ androidComponents {
 // https://docs.gradle.org/current/kotlin-dsl/gradle/org.gradle.api/-project/after-evaluate.html
 project.afterEvaluate {
     project.afterEvaluate {
+        // Add extracted apps-bundle and collections files as inputs to extracting the local python
+        // files.
+        tasks.named("extractPythonBuildPackages").configure {
+            inputs.files(extractAppsBundleTask)
+            inputs.files(extractCollectionsTask)
+        }
 
         // Python package assets are created per build variant, so any tasks that depend on those
         // also have to be created for each variant.
@@ -374,4 +414,10 @@ project.afterEvaluate {
             }
         }
     }
+}
+
+// Make the generic clean task depend on our custom clean tasks.
+tasks.named("clean").configure {
+    dependsOn(cleanAppsBundleTask)
+    dependsOn(cleanCollectionsTask)
 }

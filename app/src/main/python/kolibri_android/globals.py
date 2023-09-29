@@ -11,7 +11,7 @@ from .android_utils import get_log_root
 from .android_utils import get_logging_config
 from .android_utils import setup_analytics
 
-SCRIPT_PATH = Path(__file__).absolute().parent.parent
+PACKAGE_PATH = Path(__file__).absolute().parent
 
 FirebaseCrashlytics = autoclass("com.google.firebase.crashlytics.FirebaseCrashlytics")
 PythonException = autoclass("org.learningequality.PythonException")

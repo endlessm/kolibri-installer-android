@@ -9,7 +9,7 @@ from .android_utils import get_logging_config
 from .android_utils import get_signature_key_issuing_organization
 from .android_utils import get_timezone_name
 from .android_utils import get_version_name
-from .globals import SCRIPT_PATH
+from .globals import PACKAGE_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -76,16 +76,14 @@ def _init_kolibri_env():
     os.environ["KOLIBRI_APK_VERSION_NAME"] = get_version_name()
     os.environ["DJANGO_SETTINGS_MODULE"] = "kolibri_android.kolibri_extra.settings"
 
-    AUTOPROVISION_PATH = SCRIPT_PATH.joinpath("automatic_provision.json")
+    AUTOPROVISION_PATH = PACKAGE_PATH.joinpath("automatic_provision.json")
     if AUTOPROVISION_PATH.is_file():
         os.environ["KOLIBRI_AUTOMATIC_PROVISION_FILE"] = AUTOPROVISION_PATH.as_posix()
 
     os.environ["KOLIBRI_CHERRYPY_THREAD_POOL"] = "2"
 
-    os.environ["KOLIBRI_APPS_BUNDLE_PATH"] = SCRIPT_PATH.joinpath(
-        "apps-bundle", "apps"
-    ).as_posix()
-    os.environ["KOLIBRI_CONTENT_COLLECTIONS_PATH"] = SCRIPT_PATH.joinpath(
+    os.environ["KOLIBRI_APPS_BUNDLE_PATH"] = PACKAGE_PATH.joinpath("apps").as_posix()
+    os.environ["KOLIBRI_CONTENT_COLLECTIONS_PATH"] = PACKAGE_PATH.joinpath(
         "collections"
     ).as_posix()
 
