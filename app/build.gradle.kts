@@ -5,6 +5,7 @@
 import com.android.build.api.dsl.ManagedVirtualDevice
 import com.android.build.api.variant.Variant
 import com.android.build.api.variant.VariantOutputConfiguration.OutputType
+import de.undercouch.gradle.tasks.download.Download
 import groovy.json.JsonSlurper
 import java.time.Instant
 
@@ -12,6 +13,7 @@ import java.time.Instant
 plugins {
     id("com.android.application")
     id("com.chaquo.python")
+    id("de.undercouch.download")
 }
 
 // Configure package versions and/or URLs from properties so they're easier to update or override.
@@ -28,6 +30,30 @@ val exploreSpec = if (!exploreUrl.isBlank()) {
 val zimVersion: String by project
 val zimUrl: String by project
 val zimSpec = if (!zimUrl.isBlank()) zimUrl else "kolibri-zim-plugin==$zimVersion"
+
+// Bundle URLs
+val appsBundleUrl: String by project
+val appsBundleDownloadUrl = if (!appsBundleUrl.isBlank()) {
+    appsBundleUrl
+} else {
+    "https://github.com/endlessm/kolibri-explore-plugin/releases/download/" +
+        "v$exploreVersion/apps-bundle.zip"
+}
+val loadingScreenUrl: String by project
+val loadingScreenDownloadUrl = if (!loadingScreenUrl.isBlank()) {
+    loadingScreenUrl
+} else {
+    "https://github.com/endlessm/kolibri-explore-plugin/releases/download/" +
+        "v$exploreVersion/loading-screen.zip"
+}
+val collectionsVersion: String by project
+val collectionsUrl: String by project
+val collectionsDownloadUrl = if (!collectionsUrl.isBlank()) {
+    collectionsUrl
+} else {
+    "https://github.com/endlessm/endless-key-collections/releases/download/" +
+        "v$collectionsVersion/collections.zip"
+}
 
 // Configure the app's versionCode. We do this once here so that all
 // variants use the same version.
@@ -199,6 +225,30 @@ fun createPruneTask(variant: Variant): TaskProvider<Exec> {
             report.get().asFile.path,
         )
     }
+}
+
+// Download app-bundle.zip
+tasks.register<Download>("downloadAppsBundle") {
+    src(appsBundleDownloadUrl)
+    dest(layout.buildDirectory.file("download/apps-bundle-$exploreVersion.zip"))
+    onlyIfModified(true)
+    useETag(true)
+}
+
+// Download loading-screen.zip
+tasks.register<Download>("downloadLoadingScreen") {
+    src(loadingScreenDownloadUrl)
+    dest(layout.buildDirectory.file("download/loading-screen-$exploreVersion.zip"))
+    onlyIfModified(true)
+    useETag(true)
+}
+
+// Download collections.zip
+tasks.register<Download>("downloadCollections") {
+    src(collectionsDownloadUrl)
+    dest(layout.buildDirectory.file("download/collections-$collectionsVersion.zip"))
+    onlyIfModified(true)
+    useETag(true)
 }
 
 // Connect our tasks to external tasks.
