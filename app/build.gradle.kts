@@ -170,6 +170,8 @@ chaquopy {
 
 // App dependencies
 dependencies {
+    implementation("androidx.annotation:annotation:1.7.0")
+
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test:core:1.5.0")
     androidTestImplementation("androidx.test:runner:1.5.2")
@@ -236,7 +238,7 @@ tasks.register<Download>("downloadAppsBundle") {
 }
 
 // Download loading-screen.zip
-tasks.register<Download>("downloadLoadingScreen") {
+val downloadLoadingScreenTask = tasks.register<Download>("downloadLoadingScreen") {
     src(loadingScreenDownloadUrl)
     dest(layout.buildDirectory.file("download/loading-screen-$exploreVersion.zip"))
     onlyIfModified(true)
@@ -249,6 +251,48 @@ tasks.register<Download>("downloadCollections") {
     dest(layout.buildDirectory.file("download/collections-$collectionsVersion.zip"))
     onlyIfModified(true)
     useETag(true)
+}
+
+// Task class for collecting build assets. This needs to be a class that accepts a DirectoryProperty
+// that can be set by AGP's addGeneratedSourceDirectory. It would be nice to use Copy directly, but
+// that doesn't have a DirectoryProperty.
+abstract class CollectBuildAssetsTask : DefaultTask() {
+    // Path to the downloaded loading-screen.zip.
+    @get:InputFile
+    abstract val loadingScreenZip: RegularFileProperty
+
+    // The output directory to be set by AGP.
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun run() {
+        val proj = getProject()
+        val dest = outputDir.get()
+        proj.delete(dest)
+        proj.mkdir(dest)
+        proj.copy {
+            from(proj.zipTree(loadingScreenZip.get())) {
+                // loading-screen.zip is flat, so prepend a subdirectory.
+                eachFile {
+                    relativePath = relativePath.prepend("loadingScreen")
+                }
+                includeEmptyDirs = false
+            }
+            into(dest)
+        }
+    }
+}
+
+// The actual build assets task.
+val collectBuildAssetsTask = tasks.register<CollectBuildAssetsTask>("collectBuildAssets") {
+    inputs.files(downloadLoadingScreenTask)
+    loadingScreenZip.set(
+        // Coerce the File into a RegularFileProperty.
+        downloadLoadingScreenTask.flatMap {
+            getObjects().fileProperty().fileValue(it.dest)
+        },
+    )
 }
 
 // Connect our tasks to external tasks.
@@ -284,6 +328,12 @@ androidComponents {
                 it.versionCode.set(versionCodeValue)
                 it.versionName.set(versionName)
             }
+
+        // Add the build assets.
+        variant.sources.assets?.addGeneratedSourceDirectory(
+            collectBuildAssetsTask,
+            CollectBuildAssetsTask::outputDir,
+        )
     }
 }
 

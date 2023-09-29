@@ -23,6 +23,29 @@
                  android:usesCleartextTraffic="true"
                  android:gwpAsanMode="always"
                  >
+
+        <activity android:name=".KolibriActivity"
+                  android:exported="true"
+                  android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|fontScale|uiMode|uiMode|screenSize|smallestScreenSize|layoutDirection|density"
+                  android:screenOrientation="sensor"
+                  android:launchMode="singleTask"
+                  android:windowSoftInputMode="adjustResize"
+                  >
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <meta-data android:name="WindowManagerPreference:FreeformWindowSize"
+                       android:value="maximize" />
+            <meta-data android:name="WindowManagerPreference:FreeformWindowOrientation"
+                       android:value="landscape" />
+            <meta-data android:name="WindowManagerPreference:SuppressWindowControlNavigationButton"
+                       android:value="true" />
+
+        </activity>
+
     </application>
 
 </manifest>
