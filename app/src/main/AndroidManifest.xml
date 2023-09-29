@@ -24,6 +24,9 @@
                  android:gwpAsanMode="always"
                  >
 
+        <meta-data android:name="firebase_analytics_collection_enabled"
+                   android:value="${analytics_enabled}" />
+
         <activity android:name=".KolibriActivity"
                   android:exported="true"
                   android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|fontScale|uiMode|uiMode|screenSize|smallestScreenSize|layoutDirection|density"

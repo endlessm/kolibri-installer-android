@@ -99,6 +99,14 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
+
+            // Enable analytics by default for release builds.
+            manifestPlaceholders["analytics_enabled"] = "true"
+        }
+
+        getByName("debug") {
+            // Disable analytics by default for debug builds.
+            manifestPlaceholders["analytics_enabled"] = "false"
         }
     }
 
@@ -173,6 +181,10 @@ chaquopy {
 // App dependencies
 dependencies {
     implementation("androidx.annotation:annotation:1.7.0")
+
+    // Firebase Analytics
+    implementation(platform("com.google.firebase:firebase-bom:32.3.1"))
+    implementation("com.google.firebase:firebase-analytics")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test:core:1.5.0")
