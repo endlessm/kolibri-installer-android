@@ -13,6 +13,7 @@ import java.time.Instant
 plugins {
     id("com.android.application")
     id("com.chaquo.python")
+    id("com.google.firebase.crashlytics")
     id("com.google.gms.google-services")
     id("de.undercouch.download")
 }
@@ -182,9 +183,11 @@ chaquopy {
 dependencies {
     implementation("androidx.annotation:annotation:1.7.0")
 
-    // Firebase Analytics
+    // Firebase Analytics and Crashlytics
     implementation(platform("com.google.firebase:firebase-bom:32.3.1"))
     implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-crashlytics")
+    implementation("com.google.firebase:firebase-crashlytics-ndk")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test:core:1.5.0")
