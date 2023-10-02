@@ -19,27 +19,20 @@ logger = logging.getLogger(__name__)
 
 AlertDialogBuilder = autoclass("android.app.AlertDialog$Builder")
 AndroidString = autoclass("java.lang.String")
-BuildConfig = autoclass("org.endlessos.Key.BuildConfig")
 Context = autoclass("android.content.Context")
 File = autoclass("java.io.File")
 FileProvider = autoclass("androidx.core.content.FileProvider")
-FirebaseAnalytics = autoclass("com.google.firebase.analytics.FirebaseAnalytics")
-FirebaseCrashlytics = autoclass("com.google.firebase.crashlytics.FirebaseCrashlytics")
 Intent = autoclass("android.content.Intent")
 Log = autoclass("android.util.Log")
 PackageManager = autoclass("android.content.pm.PackageManager")
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
 Secure = autoclass("android.provider.Settings$Secure")
-SystemProperties = autoclass("android.os.SystemProperties")
 Timezone = autoclass("java.util.TimeZone")
 Uri = autoclass("android.net.Uri")
 WebView = autoclass("android.webkit.WebView")
 
 ANDROID_VERSION = autoclass("android.os.Build$VERSION")
 SDK_INT = ANDROID_VERSION.SDK_INT
-
-# System property configuring Analytics and Crashlytics.
-ANALYTICS_SYSPROP = "debug.org.endlessos.key.analytics"
 
 # Minimum webview major version required
 WEBVIEW_MIN_MAJOR_VERSION = {
@@ -142,48 +135,6 @@ def get_signature_key_issuing_organization():
     signer = get_signature_key_issuer()
     orgs = re.findall(r"\bO=([^,]+)", signer)
     return orgs[0] if orgs else ""
-
-
-def setup_analytics():
-    """Enable or disable Firebase Analytics and Crashlytics
-
-    For release builds, they're enabled by default. For debug builds,
-    they're disabled by default. They can be explicitly enabled or
-    disabled using the debug.org.endlessos.key.analytics system
-    property. For example, `adb shell setprop
-    debug.org.endlessos.key.analytics true`.
-    """
-    if BuildConfig.DEBUG:
-        logger.debug("Debug build, analytics default disabled")
-        analytics_default = False
-    else:
-        logger.debug("Release build, analytics default enabled")
-        analytics_default = True
-
-    # Allow explicitly enabling or disabling using a system property.
-    analytics_enabled = SystemProperties.getBoolean(
-        ANALYTICS_SYSPROP,
-        analytics_default,
-    )
-    if analytics_enabled is not analytics_default:
-        logger.debug(
-            "Analytics %s from %s system property",
-            "enabled" if analytics_enabled else "disabled",
-            ANALYTICS_SYSPROP,
-        )
-
-    # Analytics and Crashlytics collection enablement persists across
-    # executions, so actively enable or disable based on the current
-    # settings.
-    logging.info(
-        "%s Firebase Analytics and Crashlytics",
-        "Enabling" if analytics_enabled else "Disabling",
-    )
-    context = get_activity()
-    analytics = FirebaseAnalytics.getInstance(context)
-    crashlytics = FirebaseCrashlytics.getInstance()
-    analytics.setAnalyticsCollectionEnabled(analytics_enabled)
-    crashlytics.setCrashlyticsCollectionEnabled(analytics_enabled)
 
 
 class WebViewUpdateClickListener(PythonJavaClass):
