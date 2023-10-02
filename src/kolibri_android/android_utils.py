@@ -423,18 +423,8 @@ def setup_analytics():
         logger.debug("Debug build, analytics default disabled")
         analytics_default = False
     else:
-        # Disable analytics for Endless test installs.
-        if (
-            referrer.get("utm_source", "") == "eos"
-            and referrer.get("utm_campaign", "") == "test"
-        ):
-            logger.debug(
-                "Release build for Endless testing, analytics default disabled"
-            )
-            analytics_default = False
-        else:
-            logger.debug("Release build, analytics default enabled")
-            analytics_default = True
+        logger.debug("Release build, analytics default enabled")
+        analytics_default = True
 
     # Allow explicitly enabling or disabling using a system property.
     analytics_enabled = SystemProperties.getBoolean(
