@@ -8,16 +8,10 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from jnius import autoclass
 from jnius import cast
-from jnius import java_method
-from jnius import JavaException
-from jnius import PythonJavaClass
-
-from .runnable import Runnable
 
 
 logger = logging.getLogger(__name__)
 
-AlertDialogBuilder = autoclass("android.app.AlertDialog$Builder")
 AndroidString = autoclass("java.lang.String")
 Context = autoclass("android.content.Context")
 File = autoclass("java.io.File")
@@ -28,18 +22,6 @@ PackageManager = autoclass("android.content.pm.PackageManager")
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
 Secure = autoclass("android.provider.Settings$Secure")
 Timezone = autoclass("java.util.TimeZone")
-Uri = autoclass("android.net.Uri")
-WebView = autoclass("android.webkit.WebView")
-
-ANDROID_VERSION = autoclass("android.os.Build$VERSION")
-SDK_INT = ANDROID_VERSION.SDK_INT
-
-# Minimum webview major version required
-WEBVIEW_MIN_MAJOR_VERSION = {
-    # Android System Webview
-    "com.google.android.webview": 80,
-}
-
 
 # Globals to keep references to Java objects
 # See https://github.com/Android-for-Python/Android-for-Python-Users#pyjnius-memory-management
@@ -135,94 +117,6 @@ def get_signature_key_issuing_organization():
     signer = get_signature_key_issuer()
     orgs = re.findall(r"\bO=([^,]+)", signer)
     return orgs[0] if orgs else ""
-
-
-class WebViewUpdateClickListener(PythonJavaClass):
-    """OnClickListener for webview update dialog"""
-
-    __javainterfaces__ = ["android/content/DialogInterface$OnClickListener"]
-    __javacontext__ = "app"
-
-    def __init__(self, activity, package_name):
-        super().__init__()
-        self.activity = activity
-        self.package_name = package_name
-
-    @java_method("(Landroid/content/DialogInterface;I)V")
-    def onClick(self, dialog, which):
-        logger.debug(f"Starting webview update activity for {self.package_name}")
-
-        # Try both the market:// and https://play.google.com/ URIs.
-        uri = Uri.parse(f"market://details?id={self.package_name}")
-        intent = Intent(Intent.ACTION_VIEW, uri)
-        try:
-            self.activity.startActivity(intent)
-        except JavaException as err:
-            if err.classname != "android.content.ActivityNotFoundException":
-                raise
-
-            uri = Uri.parse(
-                f"https://play.google.com/store/apps/details?id={self.package_name}"
-            )
-            intent.setData(uri)
-            try:
-                self.activity.startActivity(intent)
-            except JavaException as err:
-                if err.classname != "android.content.ActivityNotFoundException":
-                    raise
-
-                logger.warning(
-                    f"No activity found to update webview package {self.package_name}"
-                )
-
-
-def check_webview_version():
-    """Check if the current webview meets requirements"""
-    # getCurrentWebViewPackage is only available since API 26.
-    if SDK_INT < 26:
-        logger.warning(f"Cannot get webview package on SDK {SDK_INT}")
-        return
-
-    pkg = WebView.getCurrentWebViewPackage()
-    if pkg is None:
-        logger.warning("Could not determine current webview package")
-        return
-
-    pkg_name = str(pkg.packageName)
-    pkg_version = str(pkg.versionName)
-    logger.info(f'Webview package: {pkg_name} "{pkg_version}"')
-
-    min_major_version = WEBVIEW_MIN_MAJOR_VERSION.get(pkg_name)
-    if min_major_version is None:
-        logger.warning(f"Cannot check webview version for {pkg_name}")
-        return
-
-    try:
-        major_version = int(pkg_version.split(".", 1)[0])
-    except ValueError:
-        logger.warning(f'Could not parse webview major version from "{pkg_version}"')
-        return
-
-    logger.debug(f"{pkg_name} major version: {major_version}")
-    if major_version >= min_major_version:
-        return
-
-    # Create a dialog to instruct the user to update the webview.
-    logger.debug(f"Initiating webview package {pkg_name} update")
-    activity = get_activity()
-    builder = AlertDialogBuilder(activity)
-    builder.setMessage(
-        AndroidString(
-            "You need to update the Android System Webview component to use Endless Key."
-        )
-    )
-    builder.setPositiveButton(
-        AndroidString("Update"), WebViewUpdateClickListener(activity, pkg_name)
-    )
-    builder.setCancelable(False)
-
-    # Show the dialog on the UI thread.
-    Runnable(builder.show)()
 
 
 class StartupState(Enum):

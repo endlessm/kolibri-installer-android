@@ -4,7 +4,6 @@ from urllib.parse import urlparse
 
 from jnius import autoclass
 
-from ..android_utils import check_webview_version
 from ..android_utils import share_by_intent
 from ..android_utils import StartupState
 from ..application import BaseActivity
@@ -129,7 +128,6 @@ class MainActivity(BaseActivity):
             return None
 
     def run(self):
-        check_webview_version()
         show_loading_page(INITIAL_LOADING_PAGE_URL)
         while True:
             if callable(self.TO_RUN_IN_MAIN):
