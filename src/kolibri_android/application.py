@@ -18,11 +18,6 @@ class BaseActivity(object):
     def run(self):
         raise NotImplementedError()
 
-    def start_service(self, service_name, service_args=None):
-        from .android_utils import start_service
-
-        start_service(service_name, service_args)
-
     def on_activity_post_created(self, activity, state_bundle):
         # FIXME: With the current version of python-for-android, it is
         #        unlikely that this function will run, because the Python

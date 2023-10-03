@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import re
@@ -12,7 +11,6 @@ from jnius import autoclass
 from jnius import cast
 from jnius import java_method
 from jnius import JavaException
-from jnius import jnius
 from jnius import PythonJavaClass
 
 from .runnable import Runnable
@@ -20,7 +18,6 @@ from .runnable import Runnable
 
 logger = logging.getLogger(__name__)
 
-Activity = autoclass("android.app.Activity")
 AlertDialogBuilder = autoclass("android.app.AlertDialog$Builder")
 AndroidString = autoclass("java.lang.String")
 BuildConfig = autoclass("org.endlessos.Key.BuildConfig")
@@ -32,35 +29,20 @@ FirebaseAnalytics = autoclass("com.google.firebase.analytics.FirebaseAnalytics")
 FirebaseCrashlytics = autoclass("com.google.firebase.crashlytics.FirebaseCrashlytics")
 Intent = autoclass("android.content.Intent")
 Log = autoclass("android.util.Log")
-NotificationBuilder = autoclass("android.app.Notification$Builder")
-NotificationManager = autoclass("android.app.NotificationManager")
 PackageManager = autoclass("android.content.pm.PackageManager")
-PendingIntent = autoclass("android.app.PendingIntent")
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
 Secure = autoclass("android.provider.Settings$Secure")
 SystemProperties = autoclass("android.os.SystemProperties")
 Timezone = autoclass("java.util.TimeZone")
-Toast = autoclass("android.widget.Toast")
 Uri = autoclass("android.net.Uri")
 WebView = autoclass("android.webkit.WebView")
-FirebaseApp = autoclass("com.google.firebase.FirebaseApp")
 
 ANDROID_VERSION = autoclass("android.os.Build$VERSION")
 RELEASE = ANDROID_VERSION.RELEASE
 SDK_INT = ANDROID_VERSION.SDK_INT
 
-# Chrome OS constant UUID for the My Files volume. In Android this shows
-# up as a removable volume, which throws off the detection of USB
-# devices. Below it's filtered out from removable storage searches.
-#
-# https://source.chromium.org/chromium/chromium/src/+/main:ash/components/arc/volume_mounter/arc_volume_mounter_bridge.cc;l=51
-MY_FILES_UUID = "0000000000000000000000000000CAFEF00D2019"
-
 # System property configuring Analytics and Crashlytics.
 ANALYTICS_SYSPROP = "debug.org.endlessos.key.analytics"
-
-
-USB_CONTENT_FLAG_FILENAME = "usb_content_flag"
 
 # Minimum webview major version required
 WEBVIEW_MIN_MAJOR_VERSION = {
@@ -71,8 +53,6 @@ WEBVIEW_MIN_MAJOR_VERSION = {
 
 # Globals to keep references to Java objects
 # See https://github.com/Android-for-Python/Android-for-Python-Users#pyjnius-memory-management
-_notification_builder = None
-_notification_intent = None
 _send_intent = None
 
 # Path.is_relative_to only on python 3.9+.
@@ -108,19 +88,6 @@ def get_android_node_id():
     return Secure.getString(get_activity().getContentResolver(), Secure.ANDROID_ID)
 
 
-def start_service(service_name, service_args=None):
-    service_args = service_args or {}
-    service = autoclass("org.endlessos.Key.Service{}".format(service_name.title()))
-    service.start(PythonActivity.mActivity, json.dumps(dict(service_args)))
-
-
-def get_service_args():
-    assert (
-        is_service_context()
-    ), "Cannot get service args, as we are not in a service context."
-    return json.loads(os.environ.get("PYTHON_SERVICE_ARGUMENT") or "{}")
-
-
 def get_package_info(package_name="org.endlessos.Key", flags=0):
     return get_activity().getPackageManager().getPackageInfo(package_name, flags)
 
@@ -136,25 +103,6 @@ def get_activity():
         return PythonActivity.mActivity
 
 
-def get_preferences():
-    activity = get_activity()
-    return activity.getSharedPreferences(
-        activity.getPackageName(), Activity.MODE_PRIVATE
-    )
-
-
-def is_app_installed(app_id):
-
-    manager = get_activity().getPackageManager()
-
-    try:
-        manager.getPackageInfo(app_id, PackageManager.GET_ACTIVITIES)
-    except jnius.JavaException:
-        return False
-
-    return True
-
-
 # TODO: check for storage availability, allow user to chose sd card or internal
 def get_home_folder():
     kolibri_home_file = get_activity().getExternalFilesDir(None)
@@ -164,20 +112,6 @@ def get_home_folder():
 def get_log_root():
     """Root path for log files"""
     return os.path.join(get_home_folder(), "logs")
-
-
-def show_toast(context, msg, duration):
-    """Helper to create and show a Toast message"""
-
-    def func():
-        Toast.makeText(context, AndroidString(msg), duration).show()
-
-    runnable = Runnable(func)
-    runnable()
-
-
-def send_whatsapp_message(msg):
-    share_by_intent(message=msg, app="com.whatsapp")
 
 
 def share_by_intent(path=None, filename=None, message=None, app=None, mimetype=None):
@@ -208,56 +142,6 @@ def share_by_intent(path=None, filename=None, message=None, app=None, mimetype=N
     _send_intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     get_activity().startActivity(_send_intent)
     _send_intent = None
-
-
-def init_firebase_app():
-    app_context = get_service().getApplication().getApplicationContext()
-    FirebaseApp.initializeApp(app_context)
-
-
-def make_service_foreground(title, message):
-    global _notification_builder
-    global _notification_intent
-
-    service = get_service()
-    Drawable = autoclass("{}.R$drawable".format(service.getPackageName()))
-    app_context = service.getApplication().getApplicationContext()
-
-    if SDK_INT >= 26:
-        NotificationChannel = autoclass("android.app.NotificationChannel")
-        notification_service = cast(
-            NotificationManager,
-            get_activity().getSystemService(Context.NOTIFICATION_SERVICE),
-        )
-        channel_id = get_activity().getPackageName()
-        app_channel = NotificationChannel(
-            channel_id,
-            "Kolibri Background Server",
-            NotificationManager.IMPORTANCE_DEFAULT,
-        )
-        notification_service.createNotificationChannel(app_channel)
-        _notification_builder = NotificationBuilder(app_context, channel_id)
-    else:
-        _notification_builder = NotificationBuilder(app_context)
-
-    _notification_builder.setContentTitle(AndroidString(title))
-    _notification_builder.setContentText(AndroidString(message))
-    _notification_intent = Intent(app_context, PythonActivity)
-    _notification_intent.setFlags(
-        Intent.FLAG_ACTIVITY_CLEAR_TOP
-        | Intent.FLAG_ACTIVITY_SINGLE_TOP
-        | Intent.FLAG_ACTIVITY_NEW_TASK
-    )
-    _notification_intent.setAction(Intent.ACTION_MAIN)
-    _notification_intent.addCategory(Intent.CATEGORY_LAUNCHER)
-    intent = PendingIntent.getActivity(service, 0, _notification_intent, 0)
-    _notification_builder.setContentIntent(intent)
-    _notification_builder.setSmallIcon(Drawable.icon)
-    _notification_builder.setAutoCancel(True)
-    new_notification = _notification_builder.getNotification()
-    service.startForeground(1, new_notification)
-    _notification_builder = None
-    _notification_intent = None
 
 
 def get_signature_key_issuer():
