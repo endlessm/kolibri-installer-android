@@ -165,6 +165,7 @@ chaquopy {
         extractPackages("kolibri.dist.morango.migrations")
         extractPackages("kolibri.dist.rest_framework.authtoken.migrations")
         extractPackages("kolibri_explore_plugin.migrations")
+        extractPackages("kolibri_android.plugin.migrations")
     }
 }
 
