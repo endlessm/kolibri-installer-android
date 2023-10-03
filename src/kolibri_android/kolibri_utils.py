@@ -24,6 +24,7 @@ DISABLED_PLUGINS = [
 # correctly:
 REQUIRED_PLUGINS = [
     "kolibri.plugins.app",
+    "kolibri_android.plugin",
 ]
 
 # These Kolibri plugins will be dynamically enabled if they are available:
