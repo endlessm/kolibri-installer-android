@@ -7,7 +7,6 @@ from pathlib import Path
 
 from jnius import autoclass
 
-from .android_utils import apply_android_workarounds
 from .android_utils import get_log_root
 from .android_utils import get_logging_config
 from .android_utils import setup_analytics
@@ -27,7 +26,6 @@ def initialize():
     dictConfig(logging_config)
 
     setup_analytics()
-    apply_android_workarounds()
 
     sys.path.append(SCRIPT_PATH.as_posix())
     sys.path.append(SCRIPT_PATH.joinpath("kolibri", "dist").as_posix())
