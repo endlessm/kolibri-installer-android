@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 from org.kivy.android import PythonActivity
 from org.learningequality import KolibriAndroidHelper
 
-from ..android_utils import share_by_intent
+from ..android_utils import share_file
 from ..application import BaseActivity
 from ..runnable import Runnable
 
@@ -38,7 +38,7 @@ def _build_kolibri_process_bus(application):
     from .kolibri_bus import AppPlugin
     from .kolibri_bus import KolibriAppProcessBus
 
-    AppPlugin.register_share_file_interface(share_by_intent)
+    AppPlugin.register_share_file_interface(share_file)
 
     kolibri_bus = KolibriAppProcessBus(enable_zeroconf=True)
     AppPlugin(kolibri_bus, application).subscribe()

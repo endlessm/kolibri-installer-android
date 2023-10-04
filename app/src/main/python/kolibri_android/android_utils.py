@@ -41,33 +41,32 @@ def get_context():
     raise RuntimeError("Context has not been set from the application component")
 
 
-def share_by_intent(path=None, filename=None, message=None, app=None, mimetype=None):
+def share_file(path, message, app=None, mimetype=None):
     global _send_intent
-
-    assert (
-        path or message or filename
-    ), "Must provide either a path, a filename, or a msg to share"
 
     _send_intent = Intent()
     _send_intent.setAction(Intent.ACTION_SEND)
     context = get_context()
-    if path:
-        uri = FileProvider.getUriForFile(
-            context,
-            "org.endlessos.Key.fileprovider",
-            File(path),
-        )
-        parcelable = cast(Parcelable, uri)
-        _send_intent.putExtra(Intent.EXTRA_STREAM, parcelable)
-        _send_intent.setType(String(mimetype or "*/*"))
-        _send_intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    if message:
-        if not path:
-            _send_intent.setType(String(mimetype or "text/plain"))
-        _send_intent.putExtra(Intent.EXTRA_TEXT, String(message))
+    uri = FileProvider.getUriForFile(
+        context,
+        "org.endlessos.Key.fileprovider",
+        File(path),
+    )
+    parcelable = cast(Parcelable, uri)
+    _send_intent.putExtra(Intent.EXTRA_STREAM, parcelable)
+    _send_intent.setType(String(mimetype or "*/*"))
+    _send_intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+
+    # If an app was specified, send it directly there. Otherwise, create an activity
+    # chooser wrapping the intent with the message as the title.
     if app:
         _send_intent.setPackage(String(app))
+    else:
+        _send_intent = Intent.createChooser(_send_intent, String(message))
+
+    # The context is likely not an Activity, so start a new task.
     _send_intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
     context.startActivity(_send_intent)
     _send_intent = None
 
