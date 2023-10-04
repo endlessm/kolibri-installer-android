@@ -251,7 +251,7 @@ install:
 	$(ADB) install dist/*-debug-*.apk
 
 logcat:
-	$(ADB) logcat '*:F' org.endlessos.Key EndlessKey EKWebConsole python:D PythonActivity:D
+	$(ADB) logcat '*:F' EndlessKey EKWebConsole python:D PythonActivity:D
 
 $(SDK)/cmdline-tools/latest/bin/sdkmanager:
 	@echo "Downloading Android SDK command line tools"

@@ -151,10 +151,10 @@ class AndroidLogHandler(logging.Handler):
     Android log analysis tools.
     """
 
-    def __init__(self, tag=None):
+    def __init__(self, tag):
         super().__init__()
 
-        self.tag = tag or get_activity().getPackageName()
+        self.tag = tag
 
     def emit(self, record):
         try:
@@ -210,8 +210,9 @@ def get_logging_config(LOG_ROOT, debug=False, debug_database=False):
         "handlers": {
             "android": {
                 "class": "kolibri_android.android_utils.AndroidLogHandler",
-                # Since Android loggingthat already has timestamps and
-                # priority levels, they aren't needed here.
+                "tag": "EndlessKey",
+                # Since Android logging already has timestamps and priority levels, they
+                # aren't needed here.
                 "formatter": "simple",
             },
             "file": {

@@ -99,7 +99,7 @@ development environment inside a container.
 To get all debug logs from the application, run:
 
 ```
-adb logcat '*:F' org.endlessos.Key EndlessKey EKWebConsole python:D PythonActivity:D
+adb logcat '*:F' EndlessKey EKWebConsole python:D PythonActivity:D
 ```
 
 ### Client side
