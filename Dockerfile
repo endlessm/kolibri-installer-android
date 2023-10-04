@@ -15,6 +15,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
         build-essential \
         ccache \
         git \
+        jq \
         libffi-dev \
         libssl-dev \
         libtool \

@@ -82,12 +82,17 @@ def _init_kolibri_env():
 
     os.environ["KOLIBRI_CHERRYPY_THREAD_POOL"] = "2"
 
+    os.environ["KOLIBRI_CONTENT_FALLBACK_DIRS"] = SCRIPT_PATH.joinpath(
+        "kolibri", "dist", "home", "content"
+    ).as_posix()
+
     os.environ["KOLIBRI_APPS_BUNDLE_PATH"] = SCRIPT_PATH.joinpath(
         "apps-bundle", "apps"
     ).as_posix()
     os.environ["KOLIBRI_CONTENT_COLLECTIONS_PATH"] = SCRIPT_PATH.joinpath(
         "collections"
     ).as_posix()
+    os.environ["KOLIBRI_HIDE_DISCOVERY_TAB"] = "yes"
 
     node_id = get_android_node_id()
 

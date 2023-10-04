@@ -57,6 +57,7 @@ CLEAN_DEPS = \
 	clean-kolibri \
 	clean-apps-bundle \
 	clean-collections \
+	clean-endless-key-kolibri-home \
 	clean-local-kolibri-explore-plugin \
 	clean-loadingScreen
 CLEAN_FILES = \
@@ -145,6 +146,20 @@ clean-apps-bundle:
 src/apps-bundle: clean-apps-bundle apps-bundle.zip
 	unzip -qo apps-bundle.zip -d src/apps-bundle
 
+.PHONY: clean-endless-key-kolibri-home
+clean-endless-key-kolibri-home:
+	- rm -rf src/kolibri/dist/home
+
+# This is phony because we are replacing existing files inside src/kolibri :(
+.PHONY: src/kolibri/dist/home
+src/kolibri/dist/home: export KOLIBRI_HOME = src/kolibri/dist/home
+src/kolibri/dist/home: src/collections src/kolibri
+	rm -rf $@
+	kolibri manage migrate
+	cat src/collections/artist-0001.json | jq '.channels[] | .id' | xargs -n1 kolibri manage importchannel network
+	cat src/collections/artist-0001.json | jq '.channels[] | .id' | xargs -n1 kolibri manage importcontent --manifest=src/collections/artist-0001.json network
+	yes 'yes' | kolibri manage deprovision
+
 .PHONY: collections.zip
 collections.zip:
 	wget -N https://github.com/endlessm/endless-key-collections/releases/latest/download/collections.zip
@@ -193,6 +208,7 @@ DIST_DEPS = \
 	src/kolibri \
 	src/apps-bundle \
 	src/collections \
+	src/kolibri/dist/home \
 	assets/loadingScreen \
 	needs-version \
 	dist/version.json

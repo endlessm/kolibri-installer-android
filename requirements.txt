@@ -1,3 +1,4 @@
 cython~=0.29
 virtualenv
 git+https://github.com/endlessm/python-for-android@v2022.09.04-endless10#egg=python-for-android
+https://github.com/learningequality/kolibri/releases/download/v0.16.0-beta5/kolibri-0.16.0b5-py2.py3-none-any.whl
