@@ -42,8 +42,3 @@ class BaseActivity(object):
 
     def on_activity_save_instance_state(self, activity, out_state_bundle):
         logging.info("onActivitySaveInstanceState")
-
-
-class BaseService(object):
-    def run(self):
-        raise NotImplementedError()
