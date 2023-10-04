@@ -1,8 +1,6 @@
 import logging
 import os
 
-from android.app import Service
-from android.content import Context
 from android.content import Intent
 from android.os import Parcelable
 from android.util import Log
@@ -10,8 +8,7 @@ from androidx.core.content import FileProvider
 from java import cast
 from java.io import File
 from java.lang import String
-from org.kivy.android import PythonActivity
-from org.kivy.android import PythonService
+from org.endlessos.key import KolibriActivity
 
 
 logger = logging.getLogger(__name__)
@@ -21,22 +18,27 @@ logger = logging.getLogger(__name__)
 _send_intent = None
 
 
-def is_service_context():
-    return "PYTHON_SERVICE_ARGUMENT" in os.environ
-
-
-def get_service():
-    assert (
-        is_service_context()
-    ), "Cannot get service, as we are not in a service context."
-    return PythonService.mService
-
-
 def get_activity():
-    if is_service_context():
-        return cast(Service, get_service())
-    else:
-        return PythonActivity.mActivity
+    """Get the KolibriActivity instance
+
+    Raises RuntimeError if the activity has not been created.
+    """
+    activity = KolibriActivity.getInstance()
+    if activity is None:
+        raise RuntimeError("KolibriActivity instance has not been created")
+    return activity
+
+
+def get_context():
+    """Get the application component context
+
+    Raises RuntimeError if it has not been set by the component.
+    """
+    context = KolibriActivity.getInstance()
+    if context is not None:
+        return context
+
+    raise RuntimeError("Context has not been set from the application component")
 
 
 def share_by_intent(path=None, filename=None, message=None, app=None, mimetype=None):
@@ -48,9 +50,10 @@ def share_by_intent(path=None, filename=None, message=None, app=None, mimetype=N
 
     _send_intent = Intent()
     _send_intent.setAction(Intent.ACTION_SEND)
+    context = get_context()
     if path:
         uri = FileProvider.getUriForFile(
-            Context.getApplicationContext(),
+            context,
             "org.endlessos.Key.fileprovider",
             File(path),
         )
@@ -65,7 +68,7 @@ def share_by_intent(path=None, filename=None, message=None, app=None, mimetype=N
     if app:
         _send_intent.setPackage(String(app))
     _send_intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    get_activity().startActivity(_send_intent)
+    context.startActivity(_send_intent)
     _send_intent = None
 
 
