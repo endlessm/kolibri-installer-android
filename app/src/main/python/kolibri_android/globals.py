@@ -27,10 +27,6 @@ def initialize():
 
     setup_analytics()
 
-    sys.path.append(SCRIPT_PATH.as_posix())
-    sys.path.append(SCRIPT_PATH.joinpath("kolibri", "dist").as_posix())
-    sys.path.append(SCRIPT_PATH.joinpath("extra-packages").as_posix())
-
     sys.excepthook = log_exception
 
 
