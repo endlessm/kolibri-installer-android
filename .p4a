@@ -11,12 +11,15 @@
 --allow-minsdk-ndkapi-mismatch
 --permission ACCESS_NETWORK_STATE
 --permission FOREGROUND_SERVICE
+--android-apptheme "@style/KeyTheme"
 --service remoteshell:remoteshell.py
 --presplash assets/presplash.png
 --presplash-color #F15A22
 --icon assets/icon.png
 --icon-fg assets/icon-fg.png
 --icon-bg assets/icon-bg.png
+--res-values res/values/styles.xml
+--window
 --fileprovider-paths src/fileprovider_paths.xml
 --add-asset assets/_load.html:_load.html
 --add-asset assets/loadingScreen:loadingScreen
