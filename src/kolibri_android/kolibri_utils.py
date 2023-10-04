@@ -31,6 +31,7 @@ REQUIRED_PLUGINS = [
 OPTIONAL_PLUGINS = [
     "kolibri_explore_plugin",
     "kolibri_zim_plugin",
+    "firebase_plugin",
 ]
 
 
