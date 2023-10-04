@@ -1,11 +1,6 @@
 import logging
 import os
-import re
-from enum import auto
-from enum import Enum
 
-from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from jnius import autoclass
 from jnius import cast
 
@@ -18,10 +13,7 @@ File = autoclass("java.io.File")
 FileProvider = autoclass("androidx.core.content.FileProvider")
 Intent = autoclass("android.content.Intent")
 Log = autoclass("android.util.Log")
-PackageManager = autoclass("android.content.pm.PackageManager")
 PythonActivity = autoclass("org.kivy.android.PythonActivity")
-Secure = autoclass("android.provider.Settings$Secure")
-Timezone = autoclass("java.util.TimeZone")
 
 # Globals to keep references to Java objects
 # See https://github.com/Android-for-Python/Android-for-Python-Users#pyjnius-memory-management
@@ -40,38 +32,11 @@ def get_service():
     return PythonService.mService
 
 
-def get_timezone_name():
-    return Timezone.getDefault().getDisplayName()
-
-
-def get_android_node_id():
-    return Secure.getString(get_activity().getContentResolver(), Secure.ANDROID_ID)
-
-
-def get_package_info(package_name="org.endlessos.Key", flags=0):
-    return get_activity().getPackageManager().getPackageInfo(package_name, flags)
-
-
-def get_version_name():
-    return get_package_info().versionName
-
-
 def get_activity():
     if is_service_context():
         return cast("android.app.Service", get_service())
     else:
         return PythonActivity.mActivity
-
-
-# TODO: check for storage availability, allow user to chose sd card or internal
-def get_home_folder():
-    kolibri_home_file = get_activity().getExternalFilesDir(None)
-    return os.path.join(kolibri_home_file.toString(), "KOLIBRI_DATA")
-
-
-def get_log_root():
-    """Root path for log files"""
-    return os.path.join(get_home_folder(), "logs")
 
 
 def share_by_intent(path=None, filename=None, message=None, app=None, mimetype=None):
@@ -102,44 +67,6 @@ def share_by_intent(path=None, filename=None, message=None, app=None, mimetype=N
     _send_intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     get_activity().startActivity(_send_intent)
     _send_intent = None
-
-
-def get_signature_key_issuer():
-    signature = get_package_info(flags=PackageManager.GET_SIGNATURES).signatures[0]
-    cert = x509.load_der_x509_certificate(
-        signature.toByteArray().tostring(), default_backend()
-    )
-
-    return cert.issuer.rfc4514_string()
-
-
-def get_signature_key_issuing_organization():
-    signer = get_signature_key_issuer()
-    orgs = re.findall(r"\bO=([^,]+)", signer)
-    return orgs[0] if orgs else ""
-
-
-class StartupState(Enum):
-    FIRST_TIME = auto()
-    NETWORK_USER = auto()
-
-    @classmethod
-    def get_current_state(cls):
-        """
-        Returns the current app startup state that could be:
-            * FIRST_TIME
-            * NETWORK_USER
-        """
-        home = get_home_folder()
-
-        # if there's no database in the home folder this is the first launch
-        db_path = os.path.join(home, "db.sqlite3")
-        if not os.path.exists(db_path):
-            return cls.FIRST_TIME
-
-        # in other case, the app is initialized but with content downloaded
-        # using the network
-        return cls.NETWORK_USER
 
 
 class AndroidLogHandler(logging.Handler):

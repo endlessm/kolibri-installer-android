@@ -10,18 +10,91 @@ import android.content.pm.PackageManager.PackageInfoFlags;
 import android.content.pm.Signature;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings.Secure;
 
 import androidx.annotation.Nullable;
 
+import com.chaquo.python.Kwarg;
+import com.chaquo.python.PyObject;
+import com.chaquo.python.Python;
+
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Method;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.TimeZone;
 
 /** Kolibri utility functions. */
 public class KolibriUtils {
+    private static boolean kolibriInitialized = false;
+
+    /**
+     * Return's the Kolibri home directory.
+     *
+     * @param context the package context
+     * @return the home directory File
+     */
+    public static File getKolibriHome(Context context) {
+        return new File(context.getExternalFilesDir(null), "KOLIBRI_DATA");
+    }
+
+    /**
+     * Return's the Kolibri home directory lock file.
+     *
+     * @param context the package context
+     * @return the home directory lock File
+     */
+    public static File getKolibriHomeLock(Context context) {
+        return new File(getKolibriHome(context).toString() + ".lock");
+    }
+
+    /**
+     * Initialize Kolibri.
+     *
+     * <p>Calls into the <code>kolibri_utils.initialize</code> method to setup Kolibri. Since
+     * Kolibri migrations should not be run concurrently, initialization is synchronized across
+     * threads and processes.
+     *
+     * @param context the package context
+     */
+    public static synchronized void initializeKolibri(Context context) throws IOException {
+        if (kolibriInitialized) {
+            Logger.d("Skipping Kolibri initialization");
+        }
+
+        final File lockFile = getKolibriHomeLock(context);
+        Logger.i("Acquiring Kolibri setup lock " + lockFile.toString());
+        try (final FileOutputStream lockStream = new FileOutputStream(lockFile);
+                final FileChannel lockChannel = lockStream.getChannel();
+                final FileLock lock = lockChannel.lock(); ) {
+            final String kolibriHome = getKolibriHome(context).toString();
+            Logger.i("Initializing Kolibri in " + kolibriHome);
+
+            final Python python = Python.getInstance();
+            final PyObject utilsModule = python.getModule("kolibri_android.kolibri_utils");
+            final Object[] kwargs = {
+                new Kwarg("kolibri_home", kolibriHome),
+                new Kwarg("kolibri_run_mode", getKolibriRunMode(context)),
+                new Kwarg("version_name", BuildConfig.VERSION_NAME),
+                new Kwarg("timezone", TimeZone.getDefault().getDisplayName()),
+                new Kwarg(
+                        "node_id",
+                        Secure.getString(context.getContentResolver(), Secure.ANDROID_ID)),
+                // For now, always run in debug mode.
+                new Kwarg("debug", true)
+            };
+            utilsModule.callAttr("initialize", kwargs);
+            kolibriInitialized = true;
+        }
+    }
+
     /**
      * Returns the application's metadata.
      *

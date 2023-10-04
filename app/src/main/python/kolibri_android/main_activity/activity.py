@@ -5,9 +5,7 @@ from urllib.parse import urlparse
 from jnius import autoclass
 
 from ..android_utils import share_by_intent
-from ..android_utils import StartupState
 from ..application import BaseActivity
-from ..kolibri_utils import init_kolibri
 from ..runnable import Runnable
 
 
@@ -148,8 +146,6 @@ class MainActivity(BaseActivity):
         # TODO: Wait until external storage is available
         #       <https://phabricator.endlessm.com/T33974>
 
-        init_kolibri(debug=True)
-
         self._kolibri_bus = _build_kolibri_process_bus(self)
         app_key = self._kolibri_bus.get_app_key()
         logging.info(f"Setting app key cookie: {app_key}")
@@ -168,9 +164,4 @@ class MainActivity(BaseActivity):
         self.TO_RUN_IN_MAIN = self.start_kolibri
 
     def _on_loading_ready(self):
-        startup_state = StartupState.get_current_state()
-        if startup_state == StartupState.FIRST_TIME:
-            logging.info("First time")
-        else:
-            logging.info("Starting network mode")
         self.TO_RUN_IN_MAIN = self.start_kolibri
