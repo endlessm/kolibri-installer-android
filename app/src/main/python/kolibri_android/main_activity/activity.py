@@ -2,15 +2,12 @@ import logging
 import time
 from urllib.parse import urlparse
 
-from jnius import autoclass
+from org.kivy.android import PythonActivity
+from org.learningequality import KolibriAndroidHelper
 
 from ..android_utils import share_by_intent
 from ..application import BaseActivity
 from ..runnable import Runnable
-
-
-PythonActivity = autoclass("org.kivy.android.PythonActivity")
-KolibriAndroidHelper = autoclass("org.learningequality.KolibriAndroidHelper")
 
 INITIAL_LOADING_PAGE_URL = "file:///android_asset/loadingScreen/index.html"
 LOADING_PAGE_URL = "file:///android_asset/loadingScreen/index.html#/loading/default"

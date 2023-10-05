@@ -1,19 +1,20 @@
 import logging
 import os
 
-from jnius import autoclass
-from jnius import cast
+from android.app import Service
+from android.content import Context
+from android.content import Intent
+from android.os import Parcelable
+from android.util import Log
+from androidx.core.content import FileProvider
+from java import cast
+from java.io import File
+from java.lang import String
+from org.kivy.android import PythonActivity
+from org.kivy.android import PythonService
 
 
 logger = logging.getLogger(__name__)
-
-AndroidString = autoclass("java.lang.String")
-Context = autoclass("android.content.Context")
-File = autoclass("java.io.File")
-FileProvider = autoclass("androidx.core.content.FileProvider")
-Intent = autoclass("android.content.Intent")
-Log = autoclass("android.util.Log")
-PythonActivity = autoclass("org.kivy.android.PythonActivity")
 
 # Globals to keep references to Java objects
 # See https://github.com/Android-for-Python/Android-for-Python-Users#pyjnius-memory-management
@@ -28,13 +29,12 @@ def get_service():
     assert (
         is_service_context()
     ), "Cannot get service, as we are not in a service context."
-    PythonService = autoclass("org.kivy.android.PythonService")
     return PythonService.mService
 
 
 def get_activity():
     if is_service_context():
-        return cast("android.app.Service", get_service())
+        return cast(Service, get_service())
     else:
         return PythonActivity.mActivity
 
@@ -54,16 +54,16 @@ def share_by_intent(path=None, filename=None, message=None, app=None, mimetype=N
             "org.endlessos.Key.fileprovider",
             File(path),
         )
-        parcelable = cast("android.os.Parcelable", uri)
+        parcelable = cast(Parcelable, uri)
         _send_intent.putExtra(Intent.EXTRA_STREAM, parcelable)
-        _send_intent.setType(AndroidString(mimetype or "*/*"))
+        _send_intent.setType(String(mimetype or "*/*"))
         _send_intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     if message:
         if not path:
-            _send_intent.setType(AndroidString(mimetype or "text/plain"))
-        _send_intent.putExtra(Intent.EXTRA_TEXT, AndroidString(message))
+            _send_intent.setType(String(mimetype or "text/plain"))
+        _send_intent.putExtra(Intent.EXTRA_TEXT, String(message))
     if app:
-        _send_intent.setPackage(AndroidString(app))
+        _send_intent.setPackage(String(app))
     _send_intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     get_activity().startActivity(_send_intent)
     _send_intent = None

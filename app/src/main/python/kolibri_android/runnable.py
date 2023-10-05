@@ -3,12 +3,9 @@ Runnable
 ========
 
 """
-from jnius import autoclass
 from jnius import java_method
 from jnius import PythonJavaClass
-
-# reference to the activity
-_PythonActivity = autoclass("org.kivy.android.PythonActivity")
+from org.kivy.android import PythonActivity
 
 
 class Runnable(PythonJavaClass):
@@ -29,7 +26,7 @@ class Runnable(PythonJavaClass):
         self.args = args
         self.kwargs = kwargs
         Runnable.__runnables__.append(self)
-        _PythonActivity.mActivity.runOnUiThread(self)
+        PythonActivity.mActivity.runOnUiThread(self)
 
     @java_method("()V")
     def run(self):
