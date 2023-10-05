@@ -51,6 +51,10 @@
 
         </activity>
 
+        <service android:name=".KolibriService"
+                 android:exported="false"
+                 android:process=":kolibri" />
+
         <provider android:name=".KolibriFileProvider"
                   android:authorities="org.endlessos.kolibrifileprovider"
                   android:exported="false"

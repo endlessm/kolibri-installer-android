@@ -5,6 +5,7 @@ from android.util import Log
 from java.lang import String
 from org.endlessos.key import KolibriActivity
 from org.endlessos.key import KolibriFileProvider
+from org.endlessos.key import KolibriService
 
 
 logger = logging.getLogger(__name__)
@@ -21,12 +22,27 @@ def get_activity():
     return activity
 
 
+def get_service():
+    """Get the KolibriService instance
+
+    Raises RuntimeError if the service has not been created.
+    """
+    service = KolibriService.getInstance()
+    if service is None:
+        raise RuntimeError("KolibriService instance has not been created")
+    return service
+
+
 def get_context():
     """Get the application component context
 
     Raises RuntimeError if it has not been set by the component.
     """
     context = KolibriActivity.getInstance()
+    if context is not None:
+        return context
+
+    context = KolibriService.getInstance()
     if context is not None:
         return context
 
