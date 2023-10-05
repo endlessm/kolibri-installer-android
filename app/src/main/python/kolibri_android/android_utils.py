@@ -1,21 +1,13 @@
 import logging
 import os
 
-from android.content import Intent
-from android.os import Parcelable
 from android.util import Log
-from androidx.core.content import FileProvider
-from java import cast
-from java.io import File
 from java.lang import String
 from org.endlessos.key import KolibriActivity
+from org.endlessos.key import KolibriFileProvider
 
 
 logger = logging.getLogger(__name__)
-
-# Globals to keep references to Java objects
-# See https://github.com/Android-for-Python/Android-for-Python-Users#pyjnius-memory-management
-_send_intent = None
 
 
 def get_activity():
@@ -41,34 +33,18 @@ def get_context():
     raise RuntimeError("Context has not been set from the application component")
 
 
-def share_file(path, message, app=None, mimetype=None):
-    global _send_intent
+def share_file(path, message, mimetype=None, app=None):
+    """Share a file with another application
 
-    _send_intent = Intent()
-    _send_intent.setAction(Intent.ACTION_SEND)
-    context = get_context()
-    uri = FileProvider.getUriForFile(
-        context,
-        "org.endlessos.Key.fileprovider",
-        File(path),
+    KolibriFileProvider is used to share files from this application.
+    """
+    if app is not None:
+        app = String(app)
+    if mimetype is not None:
+        mimetype = String(mimetype)
+    KolibriFileProvider.shareFile(
+        get_context(), String(path), String(message), mimetype, app
     )
-    parcelable = cast(Parcelable, uri)
-    _send_intent.putExtra(Intent.EXTRA_STREAM, parcelable)
-    _send_intent.setType(String(mimetype or "*/*"))
-    _send_intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-
-    # If an app was specified, send it directly there. Otherwise, create an activity
-    # chooser wrapping the intent with the message as the title.
-    if app:
-        _send_intent.setPackage(String(app))
-    else:
-        _send_intent = Intent.createChooser(_send_intent, String(message))
-
-    # The context is likely not an Activity, so start a new task.
-    _send_intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-
-    context.startActivity(_send_intent)
-    _send_intent = None
 
 
 class AndroidLogHandler(logging.Handler):

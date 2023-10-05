@@ -186,6 +186,7 @@ chaquopy {
 // App dependencies
 dependencies {
     implementation("androidx.annotation:annotation:1.7.0")
+    implementation("androidx.core:core:1.10.1")
 
     // Firebase Analytics and Crashlytics
     implementation(platform("com.google.firebase:firebase-bom:32.3.1"))

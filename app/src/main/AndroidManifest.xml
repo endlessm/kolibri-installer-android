@@ -51,6 +51,17 @@
 
         </activity>
 
+        <provider android:name=".KolibriFileProvider"
+                  android:authorities="org.endlessos.kolibrifileprovider"
+                  android:exported="false"
+                  android:grantUriPermissions="true"
+                  >
+
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
+                       android:resource="@xml/fileprovider_paths" />
+
+        </provider>
+
     </application>
 
 </manifest>
