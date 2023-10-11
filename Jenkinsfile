@@ -12,14 +12,16 @@ pipeline {
     }
 
     environment {
-        // URL for the Kolibri wheel to include.
-        // FIXME: It would be nice to cache this somehow.
-        // FIXME: Go back to use an official release once that happens on GitHub for 0.16.
-        KOLIBRI_WHL_URL = 'https://github.com/learningequality/kolibri/releases/download/v0.16.0-beta6/kolibri-0.16.0b6-py2.py3-none-any.whl'
+        // pre-commit, Gradle and the Android Gradle Plugin cache outputs in
+        // the home directory. Point them inside the workspace.
+        XDG_CACHE_HOME = "$WORKSPACE/_cache"
+        GRADLE_USER_HOME = "$WORKSPACE/_cache/.gradle"
+        ANDROID_USER_HOME = "$WORKSPACE/_cache/.android"
 
-        // Both p4a and gradle cache outputs in the home directory.
-        // Point it inside the workspace.
-        HOME = "$WORKSPACE/_cache"
+        // Set the versionCode property based on the build number. At one point
+        // a release was made from the PR job, which had a build number far
+        // ahead of the standard job.
+        ORG_GRADLE_PROJECT_versionCode = "${currentBuild.number + 169}"
     }
 
 
@@ -38,34 +40,21 @@ pipeline {
             }
         }
 
-        stage('Kolibri wheel') {
+        stage('Test') {
             steps {
-                sh 'make get-whl whl="$KOLIBRI_WHL_URL"'
+                sh './gradlew check'
             }
         }
 
-        stage('Distro') {
+        stage('APK') {
             steps {
-                // p4a's cache invalidation has tons of bugs. Clean the
-                // builds to ensure we get all the current code copied
-                // into it.
-                sh 'p4a clean builds'
-                // Clean first to ensure we're downloading current
-                // assets.
-                sh 'make clean'
-                sh 'make p4a_android_distro'
+                sh './gradlew build'
+                archiveArtifacts artifacts: 'app/build/outputs/apk/*/*.apk, app/build/outputs/version-*.json'
             }
         }
 
-        stage('Debug APK') {
-            steps {
-                sh 'make kolibri.apk.unsigned'
-                archiveArtifacts artifacts: 'dist/*.apk, dist/version.json'
-            }
-        }
-
-        stage('Release AAB') {
-            // Don't build the release AAB for PRs.
+        stage('AAB') {
+            // Don't create signed bundles for PRs.
             when {
                 expression { !params.ghprbPullId }
             }
@@ -74,18 +63,19 @@ pipeline {
                 withCredentials(
                     [[$class: 'VaultCertificateCredentialsBinding',
                       credentialsId: 'google-play-upload-key',
-                      keyStoreVariable: 'P4A_RELEASE_KEYSTORE',
-                      passwordVariable: 'P4A_RELEASE_KEYSTORE_PASSWD']]
+                      keyStoreVariable: 'UPLOAD_KEYSTORE',
+                      passwordVariable: 'UPLOAD_PASSWORD']]
                 ) {
-                    // p4a expects a couple more environment variables
-                    // related to the key alias within the keystore.
-                    withEnv(
-                        ['P4A_RELEASE_KEYALIAS=upload',
-                         "P4A_RELEASE_KEYALIAS_PASSWD=$P4A_RELEASE_KEYSTORE_PASSWD"]
-                    ) {
-                        sh 'make kolibri.aab'
-                        archiveArtifacts artifacts: 'dist/*.aab'
-                    }
+                    writeFile(
+                        file: 'upload.properties',
+                        text: """\
+                              storeFile=${env.UPLOAD_KEYSTORE}
+                              storePassword=${env.UPLOAD_PASSWORD}
+                              keyAlias=upload
+                              """.stripIndent(),
+                    )
+                    sh './gradlew bundle'
+                    archiveArtifacts artifacts: 'app/build/outputs/bundle/*/*.aab'
                 }
             }
         }
@@ -94,6 +84,10 @@ pipeline {
     post {
         always {
             buildDescription("UPLOAD=${params.UPLOAD}")
+        }
+
+        cleanup {
+            sh 'rm -f upload.properties'
         }
 
         success {
