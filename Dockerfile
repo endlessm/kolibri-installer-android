@@ -31,9 +31,8 @@ RUN pip install -r /tmp/requirements.txt && \
   rm -f /tmp/requirements.txt
 
 # Configure gradle for use in docker. Disable gradle's automatically
-# detected rich console doesn't work in docker. Disable the gradle
-# daemon since it will be stopped as soon as the container exits.
-ENV GRADLE_OPTS="-Dorg.gradle.console=plain -Dorg.gradle.daemon=false"
+# detected rich console since it doesn't work in docker.
+ENV GRADLE_OPTS="-Dorg.gradle.console=plain"
 
 # Create a mount point for the build cache and make it world writable so
 # that the volume can be used by an unprivileged user without additional
