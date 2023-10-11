@@ -65,6 +65,7 @@ sdk: $(ANDROID_HOME)/cmdline-tools/latest/bin/sdkmanager
 	yes y | $(ANDROID_HOME)/cmdline-tools/latest/bin/sdkmanager "platform-tools"
 	yes y | $(ANDROID_HOME)/cmdline-tools/latest/bin/sdkmanager "platforms;android-$(ANDROID_API)"
 	yes y | $(ANDROID_HOME)/cmdline-tools/latest/bin/sdkmanager "system-images;android-$(ANDROID_API);google_apis_playstore;x86_64"
+	yes y | $(ANDROID_HOME)/cmdline-tools/latest/bin/sdkmanager "system-images;android-$(ANDROID_API);google_atd;x86_64"
 	yes y | $(ANDROID_HOME)/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.1"
 	@echo "Accepting all licenses"
 	yes | $(ANDROID_HOME)/cmdline-tools/latest/bin/sdkmanager --licenses
