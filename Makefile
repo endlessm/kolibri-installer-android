@@ -240,11 +240,6 @@ kolibri.aab: $(DIST_DEPS)
 build_docker: Dockerfile
 	$(DOCKER) build -t android_kolibri .
 
-# Run the docker image.
-# TODO Would be better to just specify the file here?
-run_docker: build_docker
-	env DOCKER="$(DOCKER)" ./scripts/rundocker.sh
-
 # Toolbox build
 build_toolbox: Dockerfile-toolbox
 	$(PODMAN) build -t android_kolibri_toolbox -f $< .

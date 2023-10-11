@@ -11,18 +11,6 @@ should disable analytics as explained
 
 [play-store]: https://play.google.com/store/apps
 
-## Build on Docker
-
-This project was primarily developed on Docker, so this method is more rigorously tested.
-
-1. Install [docker](https://www.docker.com/community-edition)
-
-2. Build or download a Kolibri WHL file, and place in the `whl/` directory.
-
-3. Run `make run_docker`.
-
-4. The generated APK will end up in the `bin/` folder.
-
 ## Building for Development
 
 1. Install the Android SDK and Android NDK.
@@ -190,11 +178,6 @@ affected by test usage.
       logs from other tags.
   - Uninstall from terminal using `adb shell pm uninstall org.endlessos.Key`. ([Docs](https://developer.android.com/studio/command-line/adb#pm))
 - Docker shouldn't be rebuilding very often, so it shouldn't be using that much storage. But if it does, you can run `docker system prune` to clear out all "dangling" images, containers, and layers. If you've been constantly rebuilding, it will likely get you several gigabytes of storage.
-
-## Docker Implementation Notes
-The image was optimized to limit rebuilding and to be run in a developer-centric way. `scripts/rundocker.sh` describes the options needed to get the build running properly.
-
-Unless you need to make edits to the build method or are debugging one of the build dependencies and would like to continue using docker, you shouldn't need to modify that script.
 
 ## Using the Android Emulator
 
