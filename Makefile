@@ -17,10 +17,8 @@ else
 	PLATFORM := linux
 endif
 
+ANDROID_HOME ?= $(HOME)/.android/sdk
 ANDROID_API := 33
-ANDROIDNDKVER := 25.0.8775105
-
-SDK := ${ANDROID_HOME}/android-sdk-$(PLATFORM)
 
 ADB := adb
 DOCKER := docker
@@ -47,10 +45,6 @@ guard-%:
 		echo "Environment variable $* not set"; \
 		exit 1; \
 	fi
-
-needs-android-dirs:
-	$(MAKE) guard-ANDROIDSDK
-	$(MAKE) guard-ANDROIDNDK
 
 # Clear out downloaded and built assets
 CLEAN_DEPS = \
@@ -171,7 +165,7 @@ assets/loadingScreen: clean-loadingScreen local-kolibri-explore-plugin
 	cp -r ${EXPLOREPLUGIN_TARGET}/kolibri_explore_plugin/loadingScreen/ assets/
 
 .PHONY: p4a_android_distro
-p4a_android_distro: needs-android-dirs
+p4a_android_distro:
 	$(P4A) create $(ARCH_OPTIONS)
 
 .PHONY: needs-version
@@ -253,36 +247,24 @@ install:
 logcat:
 	$(ADB) logcat '*:F' EndlessKey EKWebConsole python:D PythonActivity:D
 
-$(SDK)/cmdline-tools/latest/bin/sdkmanager:
+$(ANDROID_HOME)/cmdline-tools/latest/bin/sdkmanager:
 	@echo "Downloading Android SDK command line tools"
 	wget https://dl.google.com/android/repository/commandlinetools-$(PLATFORM)-7583922_latest.zip
 	rm -rf cmdline-tools
 	unzip commandlinetools-$(PLATFORM)-7583922_latest.zip
 # This is unfortunate since it will download the command line tools
 # again, but after this it will be properly installed and updatable.
-	yes y | ./cmdline-tools/bin/sdkmanager "cmdline-tools;latest" --sdk_root=$(SDK)
+	yes y | ./cmdline-tools/bin/sdkmanager "cmdline-tools;latest" --sdk_root=$(ANDROID_HOME)
 	rm -rf cmdline-tools
 	rm commandlinetools-$(PLATFORM)-7583922_latest.zip
 
-sdk: $(SDK)/cmdline-tools/latest/bin/sdkmanager
-	yes y | $(SDK)/cmdline-tools/latest/bin/sdkmanager "platform-tools"
-	yes y | $(SDK)/cmdline-tools/latest/bin/sdkmanager "platforms;android-$(ANDROID_API)"
-	yes y | $(SDK)/cmdline-tools/latest/bin/sdkmanager "system-images;android-$(ANDROID_API);google_apis_playstore;x86_64"
-	yes y | $(SDK)/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2"
-	yes y | $(SDK)/cmdline-tools/latest/bin/sdkmanager "ndk;$(ANDROIDNDKVER)"
-	ln -sfT ndk/$(ANDROIDNDKVER) $(SDK)/ndk-bundle
+sdk: $(ANDROID_HOME)/cmdline-tools/latest/bin/sdkmanager
+	yes y | $(ANDROID_HOME)/cmdline-tools/latest/bin/sdkmanager "platform-tools"
+	yes y | $(ANDROID_HOME)/cmdline-tools/latest/bin/sdkmanager "platforms;android-$(ANDROID_API)"
+	yes y | $(ANDROID_HOME)/cmdline-tools/latest/bin/sdkmanager "system-images;android-$(ANDROID_API);google_apis_playstore;x86_64"
+	yes y | $(ANDROID_HOME)/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2"
 	@echo "Accepting all licenses"
-	yes | $(SDK)/cmdline-tools/latest/bin/sdkmanager --licenses
+	yes | $(ANDROID_HOME)/cmdline-tools/latest/bin/sdkmanager --licenses
 
-# All of these commands are non-destructive, so if the cmdline-tools are already installed, make will skip
-# based on the directory existing.
-# The SDK installations will take a little time, but will not attempt to redownload if already installed.
-setup:
-	$(MAKE) guard-ANDROID_HOME
-	$(MAKE) sdk
-	@echo "Make sure to set the necessary environment variables"
-	@echo "export ANDROIDSDK=$(SDK)"
-	@echo "export ANDROIDNDK=$(SDK)/ndk-bundle"
-
-clean-tools:
+clean-sdk:
 	rm -rf ${ANDROID_HOME}

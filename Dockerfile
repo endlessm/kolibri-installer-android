@@ -22,7 +22,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 # Install Android SDK
 ENV ANDROID_HOME=/opt/android/sdk
 COPY Makefile /tmp/
-RUN make -C /tmp setup && \
+RUN make -C /tmp sdk && \
   rm -f /tmp/Makefile
 
 # install python dependencies
