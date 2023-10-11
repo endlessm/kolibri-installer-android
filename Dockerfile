@@ -9,32 +9,20 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
         java-common \
         ca-certificates-java && \
     apt-get install -y \
-        autoconf \
-        automake \
-        autopoint \
-        build-essential \
-        ccache \
         git \
-        libffi-dev \
-        libssl-dev \
-        libtool \
         openjdk-17-jdk-headless \
         python-is-python3 \
-        python3-dev \
+        python3 \
         python3-pip \
-        python3-venv \
-        unzip \
         wget \
-        zip \
+        unzip \
         && \
     apt-get clean
 
 # Install Android SDK
-ENV ANDROID_HOME=/opt/android
-ENV ANDROIDSDK=$ANDROID_HOME/sdk
-ENV ANDROIDNDK=$ANDROIDSDK/ndk-bundle
+ENV ANDROID_HOME=/opt/android/sdk
 COPY Makefile /tmp/
-RUN make -C /tmp setup SDK=$ANDROIDSDK && \
+RUN make -C /tmp setup && \
   rm -f /tmp/Makefile
 
 # install python dependencies
@@ -52,4 +40,4 @@ ENV GRADLE_OPTS="-Dorg.gradle.console=plain -Dorg.gradle.daemon=false"
 # setup.
 RUN mkdir /cache && chmod 777 /cache
 
-CMD [ "make", "kolibri.apk" ]
+CMD [ "./gradlew", "build", "bundle" ]
