@@ -32,6 +32,7 @@ venv/
 .idea/
 build/
 local.properties
+upload.properties
 
 *.apk
 .env

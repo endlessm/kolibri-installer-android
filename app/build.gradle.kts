@@ -8,6 +8,7 @@ import com.android.build.api.variant.VariantOutputConfiguration.OutputType
 import de.undercouch.gradle.tasks.download.Download
 import groovy.json.JsonSlurper
 import java.time.Instant
+import java.util.Properties
 
 // Gradle plugins
 plugins {
@@ -99,8 +100,46 @@ android {
         buildConfig = true
     }
 
+    signingConfigs {
+        // Create the upload signing configuration if the properties file exists.
+        val uploadPropFile = rootProject.file("upload.properties")
+        if (uploadPropFile.exists()) {
+            val uploadProps = Properties()
+            uploadProps.load(uploadPropFile.reader())
+
+            val storeFileProp: String? = uploadProps.getProperty("storeFile")
+            if (storeFileProp.isNullOrEmpty()) {
+                throw InvalidUserDataException("storeFile missing or empty in upload.properties")
+            }
+            val storePasswordProp: String? = uploadProps.getProperty("storePassword")
+            if (storePasswordProp.isNullOrEmpty()) {
+                throw InvalidUserDataException(
+                    "storePassword missing or empty in upload.properties",
+                )
+            }
+            val keyAliasProp: String? = uploadProps.getProperty("keyAlias")
+            if (keyAliasProp.isNullOrEmpty()) {
+                throw InvalidUserDataException("keyAlias missing or empty in upload.properties")
+            }
+            val keyPasswordProp: String? = uploadProps.getProperty("keyPassword")
+
+            create("upload") {
+                storeFile = file(storeFileProp)
+                storePassword = storePasswordProp
+                keyAlias = keyAliasProp
+                // Use the store password if the key password isn't set.
+                keyPassword = if (!keyPasswordProp.isNullOrEmpty()) {
+                    keyPasswordProp
+                } else {
+                    storePasswordProp
+                }
+            }
+        }
+    }
+
     buildTypes {
         getByName("release") {
+            signingConfig = signingConfigs.findByName("upload")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
