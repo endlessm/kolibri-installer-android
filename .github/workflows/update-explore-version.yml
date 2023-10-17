@@ -1,0 +1,49 @@
+name: Update kolibri-explore-plugin
+
+on:
+  repository_dispatch:
+    types: [kolibri-explore-plugin-release]
+
+jobs:
+  update:
+    name: Update explore version
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Git environment
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@endlessos.org"
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install python dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Update kolibri-explore-plugin version
+        run: |
+          ./app/scripts/update-explore-version.sh "${{ github.event.client_payload.VERSION }}"
+
+      # Note the commit will fail if the above update did nothing.
+      - name: Commit and push
+        run: |
+          git commit -a -m "Update kolibri-explore-plugin to ${{ github.event.client_payload.VERSION }}"
+          git push origin ${{ github.ref_name }}
+
+      # Unfortunately, this will cause a second build after the one
+      # above triggered by the push. Someday when we can safely get the
+      # signing key into github we can move all the CI to github and
+      # control it more precisely.
+      - name: Trigger uploaded kolibri-installer-android build
+        run: |
+          ./scripts/trigger_jenkins.py kolibri-installer-android UPLOAD=true
+        env:
+          JENKINS_USER: ${{ secrets.JENKINS_USERNAME }}
+          JENKINS_PASSWORD: ${{ secrets.JENKINS_PASSWORD }}
