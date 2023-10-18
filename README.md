@@ -1,6 +1,19 @@
 # Kolibri Android Installer
 
-Wraps Kolibri in an android-compatibility layer. Relies on Python-For-Android to build the APK and for compatibility on the Android platform.
+An Android application for Kolibri. [Chaquopy][chaquopy] is used to
+access Python from the Android runtime.
+
+[chaquopy]: https://chaquo.com/chaquopy/
+
+The application consists of 2 components:
+
+1. An Android [service][android-service] running Kolibri.
+2. An Android [webview][android-webview] running as the main
+   [activity][android-activity].
+
+[android-service]: https://developer.android.com/guide/components/services
+[android-webview]: https://developer.android.com/develop/ui/views/layout/webapps/webview
+[android-activity]: https://developer.android.com/guide/components/activities/intro-activities
 
 ## Installing from Google Play Store
 
@@ -11,53 +24,38 @@ should disable analytics as explained
 
 [play-store]: https://play.google.com/store/apps
 
-## Build on Docker
-
-This project was primarily developed on Docker, so this method is more rigorously tested.
-
-1. Install [docker](https://www.docker.com/community-edition)
-
-2. Build or download a Kolibri WHL file, and place in the `whl/` directory.
-
-3. Run `make run_docker`.
-
-4. The generated APK will end up in the `bin/` folder.
-
 ## Building for Development
 
-1. Install the Android SDK and Android NDK.
+1. Install Java 17 and python3:
+   ```
+   apt install openjdk-17-jdk-headless python3 python3-pip
+   ```
 
-Run `make setup`.
-Follow the instructions from the command to set your environment variables.
+2. Install the Android SDK:
+   ```
+   make sdk
+   ```
+   This will install the SDK in `$ANDROID_HOME` (`~/.android/sdk` by default).
 
-2. Install the Python dependencies:
+3. Install the Python dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
 
-`pip install -r requirements.txt`
+4. Build the debug and release APKs:
+   ```
+   ./gradlew build
+   ```
 
-3. Ensure you have all [necessary packages for Python for Android](https://python-for-android.readthedocs.io/en/latest/quickstart/#installing-dependencies).
+5. Run the [instrumented tests][android-instrumented] tests:
+   ```
+   ./gradlew allDevicesCheck
+   ```
+   See the [documentation][android-test-cli] for more details on running tests
+   from the command line.
 
-4. Build or download a Kolibri WHL file, and place it in the `whl/` directory.
-
-To download a Kolibri WHL file, you can use `make whl=<URL>` from the command line. It will download it and put it in the correct directory.
-
-5. By default the APK will be built for most architectures supported by
-   Python for Android. To build for a smaller set of architectures, set
-   the `ARCHES` environment variable. Run `p4a archs` to see the
-   available targets.
-
-6. Run `make kolibri.apk.unsigned` to build the apk. Watch for success at the end, or errors, which might indicate missing build dependencies or build errors. If successful, there should be an APK in the `dist/` directory.
-
-PS. If `p4a` command is not found, please check the ticket: ["p4a: command not found"](https://github.com/kivy/python-for-android/issues/1167). If you installed it with `--user`, make sure that `~/.local/bin` is in your `$PATH`.
-
-### Custom Explore Plugin version
-
-By default, kolibri-installer-android includes the newest released version of [kolibri-explore-plugin](https://github.com/endlessm/kolibri-explore-plugin). To test a different version, set the `EXPLOREPLUGIN_WHEEL_PATH` and `APPSBUNDLE_PATH` environment variables:
-
-    make kolibri.apk.unsigned \
-    EXPLOREPLUGIN_WHEEL_PATH=/path/to/kolibri_explore_plugin.whl \
-    APPSBUNDLE_PATH=/path/to/apps-bundle.zip
-
-The resulting app build will use the provided Explore plugin WHL and apps bundle.
+[android-instrumented]: https://developer.android.com/training/testing/instrumented-tests
+[android-test-cli]: https://developer.android.com/studio/test/command-line
 
 ## Build on Toolbox
 
@@ -70,40 +68,45 @@ development environment inside a container.
 
 3. Run `toolbox enter android_kolibri` to enter the container.
 
-4. Install the Python dependencies:
+4. Continue at step 3 in [Building for development](#building-for-development).
 
-   `pip install -r requirements.txt`
+### Custom Explore Plugin version
 
-   Optionally you can use a virtualenv for the Python dependencies so
-   that they're not installed in your home directory or in the container
-   storage.
+By default, kolibri-installer-android includes the newest released version of
+[kolibri-explore-plugin](https://github.com/endlessm/kolibri-explore-plugin).
+To test a different version, set the `exploreUrl` and `appsBundleUrl` in
+`~/.gradle/gradle.properties`:
 
-5. Build or download a Kolibri WHL file, and place it in the `whl/` directory.
+```
+exploreUrl=file:///path/to/kolibri_explore_plugin.whl
+appsBundleUrl=file:///path/to/apps-bundle.zip
+```
 
-   To download a Kolibri WHL file, you can use `make get-whl
-   whl=<URL>` from the command line. It will download it and put it in
-   the correct directory. You can check the Jenkinsfile for the URL
-   currently used by our continuous integration builds.
+## Signing release builds
 
-6. By default the APK will be built for most architectures supported by
-   Python for Android. To build for a smaller set of architectures, set
-   the `ARCHES` environment variable. Run `p4a archs` to see the
-   available targets.
+In order to upload APKs or AABs to Google Play, they need to be signed by a
+trusted key. A signing configuration for released builds will be created if the
+`upload.properties` file is present. This is a Java properties file with the
+following required keys:
 
-6. Run `make kolibri.apk.unsigned` to build the apk. Watch for success
-   at the end, or errors, which might indicate missing build
-   dependencies or build errors. If successful, there should be an APK
-   in the `dist/` directory.
+* `storeFile` - Path to the Java keystore file.
+* `storePassword` - Password for the Java keystore.
+* `keyAlias` - Alias of the signing key with the keystore.
+* `keyPassword` (optional) - Password for the signing key. If this is not set,
+  the keystore password will be used.
 
 ## Installing the apk
+
 1. Connect your Android device over USB, with USB Debugging enabled.
 
-2. Ensure that `adb devices` brings up your device. Afterward, run `make install` to install onto the device.
+2. Ensure that `adb devices` brings up your device.
+
+3. Run `./gradlew installDebug` to install onto the device.
 
 
 ## Running the apk from the terminal
 
-1. Run `adb shell am start -n org.endlessos.Key/org.kivy.android.PythonActivity`
+1. Run `adb shell am start -n org.endlessos.Key/org.endlessos.key.KolibriActivity`
 
 ## Debugging the app
 
@@ -111,7 +114,7 @@ development environment inside a container.
 To get all debug logs from the application, run:
 
 ```
-adb logcat '*:F' org.endlessos.Key EndlessKey EKWebConsole python:D PythonActivity:D
+adb logcat '*:F' EndlessKey EKWebConsole AndroidRuntime python.stdout python.stderr
 ```
 
 ### Client side
@@ -190,11 +193,6 @@ affected by test usage.
       logs from other tags.
   - Uninstall from terminal using `adb shell pm uninstall org.endlessos.Key`. ([Docs](https://developer.android.com/studio/command-line/adb#pm))
 - Docker shouldn't be rebuilding very often, so it shouldn't be using that much storage. But if it does, you can run `docker system prune` to clear out all "dangling" images, containers, and layers. If you've been constantly rebuilding, it will likely get you several gigabytes of storage.
-
-## Docker Implementation Notes
-The image was optimized to limit rebuilding and to be run in a developer-centric way. `scripts/rundocker.sh` describes the options needed to get the build running properly.
-
-Unless you need to make edits to the build method or are debugging one of the build dependencies and would like to continue using docker, you shouldn't need to modify that script.
 
 ## Using the Android Emulator
 

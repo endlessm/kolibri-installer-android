@@ -1,18 +1,5 @@
-# Downloaded and unpacked assets
-_explore/
-apps-bundle.zip
-collections.zip
-assets/loadingScreen/
-src/apps-bundle/
-src/collections/
-src/kolibri/
-whl/
-
 # File format for signing key
 *.jks
-
-# output folder
-dist/
 
 __pycache__
 *.pyc
@@ -26,6 +13,13 @@ android_root/
 tmpenv/
 venv/
 .venv/
+
+# Gradle and Android Studio
+.gradle/
+.idea/
+build/
+local.properties
+upload.properties
 
 *.apk
 .env

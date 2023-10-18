@@ -11,13 +11,14 @@ pipeline {
     stages {
         stage('Copy AAB') {
             steps {
-                // Wipe the dist directory before copying to ensure
+                // Wipe the build directory before copying to ensure
                 // there are no stale files.
-                sh 'rm -rf dist'
+                sh 'rm -rf app/build'
                 copyArtifacts(
                     projectName: 'kolibri-installer-android',
                     selector: upstream(fallbackToLastSuccessful: true),
-                    filter: 'dist/kolibri-release-*.aab, dist/version.json',
+                    filter: 'app/build/outputs/bundle/release/app-release.aab, ' +
+                        'app/build/outputs/version-release.json'
                     fingerprintArtifacts: true,
                 )
             }
@@ -33,17 +34,10 @@ pipeline {
                         error('RELEASE_NOTES parameter not set')
                     }
 
-                    // Make sure there's only a single AAB file.
-                    def pattern = 'dist/kolibri-release-*.aab'
-                    def numFiles = findFiles(glob: pattern).size()
-                    if (numFiles != 1) {
-                        error("${pattern} matched ${numFiles} files")
-                    }
-
                     def releaseNotes = readJSON(text: params.RELEASE_NOTES)
                     androidApkUpload(
                         googleCredentialsId: 'google-play-account',
-                        filesPattern: pattern,
+                        filesPattern: 'app/build/outputs/bundle/release/app-release.aab',
                         trackName: 'internal',
                         recentChangeList: releaseNotes,
                         rolloutPercentage: '100',
@@ -56,25 +50,21 @@ pipeline {
     post {
         always {
             script {
-                def version = readJSON(file: 'dist/version.json')
+                def version = readJSON(file: 'app/build/outputs/version-release.json')
                 buildDescription("${version.versionCode} ${version.versionName} ${version.ekVersion}")
             }
         }
 
         success {
             script {
-                def files = findFiles(glob: 'dist/kolibri-release-*.aab')
-                def aab = files[0].name
-                def version = readJSON(file: 'dist/version.json')
-
+                def version = readJSON(file: 'app/build/outputs/version-release.json')
                 emailext (
                     to: 'apps@endlessos.org,$DEFAULT_RECIPIENTS',
                     replyTo: 'apps@endlessos.org',
                     subject: "Uploaded org.endlessos.Key " +
                         "${version.versionCode} to internal testing",
                     body: """\
-Uploaded org.endlessos.Key ${version.versionCode} ${version.versionName} from
-${aab} to internal testing".
+Uploaded org.endlessos.Key ${version.versionCode} ${version.versionName} to internal testing.
 
 See Jenkins job \$PROJECT_NAME build \$BUILD_NUMBER for details.
 
