@@ -5,4 +5,6 @@
         You need to update the Android System Webview component to use Endless Key.
     </string>
     <string name="webview_check_update">Update</string>
+    <string name="settings_short_label">Settings</string>
+    <string name="settings_long_label">Settings</string>
 </resources>

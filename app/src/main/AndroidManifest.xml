@@ -42,12 +42,31 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <meta-data android:name="android.app.shortcuts"
+                       android:resource="@xml/shortcuts" />
             <meta-data android:name="WindowManagerPreference:FreeformWindowSize"
                        android:value="maximize" />
             <meta-data android:name="WindowManagerPreference:FreeformWindowOrientation"
                        android:value="landscape" />
             <meta-data android:name="WindowManagerPreference:SuppressWindowControlNavigationButton"
                        android:value="true" />
+
+        </activity>
+
+        <activity
+            android:name=".SettingsActivity"
+            android:theme="@android:style/Theme.Material.Light"
+            android:exported="true"
+            android:parentActivityName="org.endlessos.key.KolibriActivity"
+            >
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="org.endlessos.key.KolibriActivity" />
 
         </activity>
 
