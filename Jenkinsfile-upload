@@ -18,7 +18,7 @@ pipeline {
                     projectName: 'kolibri-installer-android',
                     selector: upstream(fallbackToLastSuccessful: true),
                     filter: 'app/build/outputs/bundle/release/app-release.aab, ' +
-                        'app/build/outputs/version-release.json'
+                        'app/build/outputs/version-release.json',
                     fingerprintArtifacts: true,
                 )
             }
