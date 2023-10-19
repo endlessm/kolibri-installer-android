@@ -477,6 +477,10 @@ project.afterEvaluate {
             pruneTask.configure {
                 inputs.files(requirementsTask)
             }
+            requirementsTask.configure {
+                // Make the requirements task run again if the pruning script has changed.
+                inputs.file("scripts/prunepackages.py")
+            }
             requirementsAssetsTask.configure {
                 // dependsOn is used here instead of wiring the prune task
                 // outputs since there aren't any outputs.
