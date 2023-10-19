@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import fnmatch
 import logging
 import os
 from argparse import ArgumentParser
@@ -68,19 +69,35 @@ REMOVE_GLOBS = [
     "common/kolibri_explore_plugin/test",
     # JS map files are only for debugging.
     "**/*.js.map",
-    # Chaquopy currently precompiles modules but also keeps the original module
-    # for packages specified in extractPackages. We don't want to disable
-    # precompiling since other packages depend on it, so we strip out the
-    # unwanted precompiled modules here.
-    #
-    # https://github.com/chaquo/chaquopy/issues/978
-    "common/kolibri/**/*.pyc",
-    "common/kolibri_explore_plugin/**/*.pyc",
 ]
 
 
 def get_locales(locales_dir):
     return (entry for entry in locales_dir.iterdir() if entry.is_dir())
+
+
+def prune_migration_modules(pkgroot, dry_run=False):
+    """Prune Django migrations compiled modules
+
+    Chaquopy currently precompiles modules but also keeps the original module for
+    packages specified in extractPackages as is needed for Django migrations packages.
+    We don't want to globally disable precompiling since it's useful for other packages,
+    so we strip out the unwanted precompiled modules here.
+
+    https://github.com/chaquo/chaquopy/issues/978
+    """
+    common_dir = pkgroot / "common"
+    for root, dirs, files in os.walk(common_dir):
+        # If the directory appears to be a Django migrations package, delete the .pyc
+        # compiled modules.
+        if os.path.basename(root) != "migrations":
+            continue
+        matches = fnmatch.filter(files, "*.pyc")
+        if matches:
+            logger.info(f"Removing {root} .pyc compiled python modules")
+            for filename in matches:
+                if not dry_run:
+                    os.unlink(os.path.join(root, filename))
 
 
 def prune(pkgroot, dry_run=False):
@@ -115,6 +132,8 @@ def prune(pkgroot, dry_run=False):
                 logger.info(f"Removing matched file '{remove_path}'")
                 if not dry_run:
                     os.unlink(remove_path)
+
+    prune_migration_modules(pkgroot, dry_run)
 
 
 def main():
