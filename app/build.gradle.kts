@@ -93,11 +93,13 @@ android {
             // Android ABIs to support. This should be minimized due to the way Chaquopy packages
             // native Python components. x86_64 is supported because our primary target is
             // Chromebooks. armeabi-v7a is supported because all other ABIs use it as a secondary
-            // ABI. Keep this in sync with the pruned Kolibri C extension ABIs in prunepackages.py.
+            // ABI. arm64-v8a is supported to meet Google Play's 64 bit requirement. Keep this in
+            // sync with the pruned Kolibri C extension ABIs in prunepackages.py.
             //
             // https://developer.android.com/ndk/guides/abis
+            // https://developer.android.com/google/play/requirements/64-bit
             // https://chaquo.com/chaquopy/doc/current/faq.html#faq-size
-            abiFilters += listOf("armeabi-v7a", "x86_64")
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
         }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
