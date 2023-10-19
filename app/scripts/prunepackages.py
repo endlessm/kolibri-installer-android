@@ -34,6 +34,11 @@ REMOVE_GLOBS = [
     "common/kolibri/dist/cext/cp37",
     "common/kolibri/dist/cext/cp38",
     "common/kolibri/dist/cext/*/Windows",
+    # Remove unneeded explore plugin components. JS source files aren't needed since
+    # only the webpacked apps in static are used at runtime. The bundled loadingScreen
+    # isn't needed as loading-screen.zip is added as an asset.
+    "common/kolibri_explore_plugin/assets",
+    "common/kolibri_explore_plugin/loadingScreen",
     "common/kolibri/dist/cheroot/test",
     "common/kolibri/dist/magicbus/test",
     "common/kolibri/dist/colorlog/tests",
