@@ -90,7 +90,14 @@ android {
         minSdk = 24
 
         ndk {
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            // Android ABIs to support. This should be minimized due to the way Chaquopy packages
+            // native Python components. x86_64 is supported because our primary target is
+            // Chromebooks. armeabi-v7a is supported because all other ABIs use it as a secondary
+            // ABI.
+            //
+            // https://developer.android.com/ndk/guides/abis
+            // https://chaquo.com/chaquopy/doc/current/faq.html#faq-size
+            abiFilters += listOf("armeabi-v7a", "x86_64")
         }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
