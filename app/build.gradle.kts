@@ -93,7 +93,7 @@ android {
             // Android ABIs to support. This should be minimized due to the way Chaquopy packages
             // native Python components. x86_64 is supported because our primary target is
             // Chromebooks. armeabi-v7a is supported because all other ABIs use it as a secondary
-            // ABI.
+            // ABI. Keep this in sync with the pruned Kolibri C extension ABIs in prunepackages.py.
             //
             // https://developer.android.com/ndk/guides/abis
             // https://chaquo.com/chaquopy/doc/current/faq.html#faq-size
@@ -191,7 +191,8 @@ android {
 // https://chaquo.com/chaquopy/doc/15.0/android.html
 chaquopy {
     defaultConfig {
-        // Python version
+        // Python version. Keep this in sync with the pruned Kolibri C extension versions in
+        // prunepackages.py.
         version = "3.9"
 
         // Packages to install with pip.

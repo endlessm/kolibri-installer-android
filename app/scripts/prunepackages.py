@@ -17,9 +17,6 @@ REMOVE_LOCALES_DIRS = [
     "common/kolibri/dist/django/contrib/auth/locale",
     "common/kolibri/dist/django/contrib/contenttypes/locale",
     "common/kolibri/dist/django/contrib/flatpages/locale",
-    "common/kolibri/dist/django/contrib/gis/locale",
-    "common/kolibri/dist/django/contrib/humanize/locale",
-    "common/kolibri/dist/django/contrib/postgres/locale",
     "common/kolibri/dist/django/contrib/redirects/locale",
     "common/kolibri/dist/django/contrib/sessions/locale",
     "common/kolibri/dist/django/contrib/sites/locale",
@@ -29,25 +26,47 @@ REMOVE_LOCALES_DIRS = [
 ]
 
 REMOVE_GLOBS = [
+    # Only the Kolibri bundled C extensions for this build are needed. Keep the list of
+    # pruned ABIs and Python versions in sync with build.gradle.kts.
+    "common/kolibri/dist/cext/*/*/armv6l",
+    "common/kolibri/dist/cext/*/*/i686",
+    "common/kolibri/dist/cext/*/*/aarch64",
     "common/kolibri/dist/cext/cp27",
     "common/kolibri/dist/cext/cp36",
     "common/kolibri/dist/cext/cp37",
     "common/kolibri/dist/cext/cp38",
+    # Keep "common/kolibri/dist/cext/cp39" to match Chaquopy Python version 3.9 in
+    # app/build.gradle.kts.
+    "common/kolibri/dist/cext/cp311",
     "common/kolibri/dist/cext/*/Windows",
     # Remove unneeded explore plugin components. JS source files aren't needed since
     # only the webpacked apps in static are used at runtime. The bundled loadingScreen
     # isn't needed as loading-screen.zip is added as an asset.
     "common/kolibri_explore_plugin/assets",
     "common/kolibri_explore_plugin/loadingScreen",
+    # Kolibri doesn't use several large django contrib apps.
+    "common/kolibri/dist/django/contrib/gis",
+    "common/kolibri/dist/django/contrib/humanize",
+    "common/kolibri/dist/django/contrib/postgres",
+    # Tests aren't needed.
+    "common/kolibri/core/*/test",
+    "common/kolibri/utils/tests",
     "common/kolibri/dist/cheroot/test",
-    "common/kolibri/dist/magicbus/test",
     "common/kolibri/dist/colorlog/tests",
     "common/kolibri/dist/django_js_reverse/tests",
+    "common/kolibri/dist/future/backports/test",
+    "common/kolibri/dist/future/moves/test",
     "common/kolibri/dist/future/tests",
     "common/kolibri/dist/ipware/tests",
+    "common/kolibri/dist/importlib_resources/tests",
+    "common/kolibri/dist/json_schema_validator/tests",
+    "common/kolibri/dist/magicbus/test",
     "common/kolibri/dist/more_itertools/tests",
     "common/kolibri/dist/past/tests",
     "common/kolibri/dist/sqlalchemy/testing",
+    "common/kolibri/plugins/*/test",
+    "common/kolibri_explore_plugin/test",
+    # JS map files are only for debugging.
     "**/*.js.map",
     # Chaquopy currently precompiles modules but also keeps the original module
     # for packages specified in extractPackages. We don't want to disable
