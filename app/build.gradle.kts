@@ -90,7 +90,14 @@ android {
         minSdk = 24
 
         ndk {
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            // Android ABIs to support. This should be minimized due to the way Chaquopy packages
+            // native Python components. x86_64 is supported because our primary target is
+            // Chromebooks. armeabi-v7a is supported because all other ABIs use it as a secondary
+            // ABI. Keep this in sync with the pruned Kolibri C extension ABIs in prunepackages.py.
+            //
+            // https://developer.android.com/ndk/guides/abis
+            // https://chaquo.com/chaquopy/doc/current/faq.html#faq-size
+            abiFilters += listOf("armeabi-v7a", "x86_64")
         }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -142,7 +149,10 @@ android {
             signingConfig = signingConfigs.findByName("upload")
             isMinifyEnabled = true
             isShrinkResources = true
-            proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
 
             // Enable analytics by default for release builds.
             manifestPlaceholders["analytics_enabled"] = "true"
@@ -181,7 +191,8 @@ android {
 // https://chaquo.com/chaquopy/doc/15.0/android.html
 chaquopy {
     defaultConfig {
-        // Python version
+        // Python version. Keep this in sync with the pruned Kolibri C extension versions in
+        // prunepackages.py.
         version = "3.9"
 
         // Packages to install with pip.
@@ -466,6 +477,10 @@ project.afterEvaluate {
             val pruneTask = createPruneTask(variant)
             pruneTask.configure {
                 inputs.files(requirementsTask)
+            }
+            requirementsTask.configure {
+                // Make the requirements task run again if the pruning script has changed.
+                inputs.file("scripts/prunepackages.py")
             }
             requirementsAssetsTask.configure {
                 // dependsOn is used here instead of wiring the prune task
