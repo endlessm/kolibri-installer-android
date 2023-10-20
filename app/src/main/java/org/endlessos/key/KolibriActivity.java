@@ -21,6 +21,7 @@ import android.os.RemoteException;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -49,6 +50,7 @@ public class KolibriActivity extends Activity {
     private KolibriWebView view;
     private String lastUrlPath = "/";
     private boolean kolibriBound = false;
+    private Uri serverUrl;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,6 +99,7 @@ public class KolibriActivity extends Activity {
         Logger.i("Unbinding Kolibri service");
         unbindService(kolibriConnection);
         kolibriBound = false;
+        serverUrl = null;
     }
 
     @Override
@@ -116,7 +119,11 @@ public class KolibriActivity extends Activity {
         return instance;
     }
 
-    private void setAppKeyCookie(Uri serverUrl, String appKey) {
+    private void setAppKeyCookie(@NonNull String appKey) {
+        if (serverUrl == null) {
+            Logger.e("Cannot set app key cookie with null serverUrl");
+            return;
+        }
         CookieManager.getInstance().setCookie(serverUrl.toString(), "app_key_cookie=" + appKey);
     }
 
@@ -136,7 +143,11 @@ public class KolibriActivity extends Activity {
         Logger.i("Set last URL path to " + lastUrlPath);
     }
 
-    private void updateServerUrl(Uri serverUrl) {
+    private void updateCurrentUrl() {
+        if (serverUrl == null) {
+            Logger.e("Cannot update current URL with null serverUrl");
+            return;
+        }
         final String url =
                 String.format(
                         "%s://%s%s", serverUrl.getScheme(), serverUrl.getAuthority(), lastUrlPath);
@@ -188,7 +199,7 @@ public class KolibriActivity extends Activity {
                 Logger.e("Received null server URL");
                 return;
             }
-            final Uri serverUrl = Uri.parse(url);
+            serverUrl = Uri.parse(url);
 
             final String appKey = data.getString("appKey");
             if (appKey == null) {
@@ -196,8 +207,8 @@ public class KolibriActivity extends Activity {
                 return;
             }
 
-            setAppKeyCookie(serverUrl, appKey);
-            updateServerUrl(serverUrl);
+            setAppKeyCookie(appKey);
+            updateCurrentUrl();
         }
     }
 
@@ -230,6 +241,7 @@ public class KolibriActivity extends Activity {
                 public void onServiceDisconnected(ComponentName name) {
                     Logger.d("Kolibri service disconnected");
                     kolibriBound = false;
+                    serverUrl = null;
                 }
             };
 
