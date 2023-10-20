@@ -96,7 +96,7 @@ public class KolibriActivity extends Activity {
 
         Logger.i("Unbinding Kolibri service");
         unbindService(kolibriConnection);
-        kolibriBound = true;
+        kolibriBound = false;
     }
 
     @Override
