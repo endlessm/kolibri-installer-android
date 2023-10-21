@@ -127,12 +127,26 @@ public class KolibriActivity extends Activity {
         CookieManager.getInstance().setCookie(serverUrl.toString(), "app_key_cookie=" + appKey);
     }
 
+    private boolean isServerUrl(@NonNull Uri url) {
+        if (serverUrl == null) {
+            return false;
+        }
+        return url.getScheme().equals(serverUrl.getScheme())
+                && url.getAuthority().equals(serverUrl.getAuthority());
+    }
+
     private void setLastUrlPathFromCurrentUrl() {
         final String viewUrl = view.getUrl();
         if (viewUrl == null) {
             return;
         }
+
         final Uri url = Uri.parse(viewUrl);
+        if (!isServerUrl(url)) {
+            Logger.d("Ignoring path from non-server URL " + url);
+            return;
+        }
+
         final String path = url.getPath();
         if (path == null) {
             Logger.w("Could not determine path in URL " + url);
