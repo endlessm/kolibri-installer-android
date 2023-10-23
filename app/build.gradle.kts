@@ -316,7 +316,7 @@ val downloadAppsBundleTask = tasks.register<Download>("downloadAppsBundle") {
     useETag(true)
 }
 
-val extractAppsBundleTask = tasks.register<Copy>("extractAppsBundle") {
+val extractAppsBundleTask = tasks.register<Sync>("extractAppsBundle") {
     from(zipTree(downloadAppsBundleTask.map { it.dest })) {
         // Strip the embedded subdirectory so we can extract to an explicit subdirectory.
         eachFile {
@@ -352,7 +352,7 @@ val downloadCollectionsTask = tasks.register<Download>("downloadCollections") {
     useETag(true)
 }
 
-val extractCollectionsTask = tasks.register<Copy>("extractCollections") {
+val extractCollectionsTask = tasks.register<Sync>("extractCollections") {
     from(zipTree(downloadCollectionsTask.map { it.dest }))
     into(collectionsDirectory)
 }
@@ -362,7 +362,7 @@ val cleanCollectionsTask = tasks.register<Delete>("cleanCollections") {
 }
 
 // Task class for collecting build assets. This needs to be a class that accepts a DirectoryProperty
-// that can be set by AGP's addGeneratedSourceDirectory. It would be nice to use Copy directly, but
+// that can be set by AGP's addGeneratedSourceDirectory. It would be nice to use Sync directly, but
 // that doesn't have a DirectoryProperty.
 abstract class CollectBuildAssetsTask : DefaultTask() {
     // Path to the downloaded loading-screen.zip.
@@ -379,7 +379,7 @@ abstract class CollectBuildAssetsTask : DefaultTask() {
         val dest = outputDir.get()
         proj.delete(dest)
         proj.mkdir(dest)
-        proj.copy {
+        proj.sync {
             from(proj.zipTree(loadingScreenZip.get())) {
                 // loading-screen.zip is flat, so prepend a subdirectory.
                 eachFile {
