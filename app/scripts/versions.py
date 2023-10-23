@@ -81,13 +81,14 @@ def git_tag():
     return p.communicate()[0].rstrip()
 
 
-def get_version_name(pkgdir):
+def get_version_name(pkgdir, version_code):
     """
     Returns the user-visible version to be used for the Android app.
     """
-    return "{} {}".format(
+    return "{} {}{}".format(
         explore_plugin_version_name(pkgdir),
         explore_plugin_simple_version(pkgdir),
+        f"-{version_code}" if version_code else "",
     )
 
 
@@ -103,8 +104,8 @@ def get_ek_version(pkgdir):
     )
 
 
-def get_version_data(pkgdir):
-    version_name = get_version_name(pkgdir)
+def get_version_data(pkgdir, version_code):
+    version_name = get_version_name(pkgdir, version_code)
     ek_version = get_ek_version(pkgdir)
     return {
         "versionName": version_name,
@@ -133,7 +134,7 @@ if __name__ == "__main__":
     )
     args = ap.parse_args()
 
-    data = get_version_data(args.pkgdir)
+    data = get_version_data(args.pkgdir, args.version_code)
     if args.version_code:
         data["versionCode"] = args.version_code
     if args.output:
