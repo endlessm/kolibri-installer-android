@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # Copyright 2023 Endless OS Foundation LLC
 # SPDX-License-Identifier: GPL-2.0-or-later
 import logging
