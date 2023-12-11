@@ -1,6 +1,6 @@
 # Dockerfile for build
 
-FROM docker.io/endlessm/eos:master
+FROM docker.io/endlessm/eos:5.1
 
 # Install the dependencies for the build system
 RUN export DEBIAN_FRONTEND=noninteractive && \
