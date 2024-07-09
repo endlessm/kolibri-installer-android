@@ -79,14 +79,14 @@ android {
     // Main Java namespace
     namespace = "org.endlessos.key"
 
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         // App ID. Customarily this is lowercase and matches the Java
         // namespace, but we've already published with Key uppercased.
         applicationId = "org.endlessos.Key"
 
-        targetSdk = 33
+        targetSdk = 34
         minSdk = 24
 
         ndk {
@@ -176,13 +176,13 @@ android {
         // https://developer.android.com/reference/tools/gradle-api/8.1/com/android/build/api/dsl/ManagedVirtualDevice
         managedDevices {
             devices {
-                maybeCreate<ManagedVirtualDevice>("desktop33").apply {
+                maybeCreate<ManagedVirtualDevice>("desktop34").apply {
                     // Use device profiles you typically see in Android Studio. See avdmanager list
                     // device.
                     device = "Medium Desktop"
                     // Google automated test device. Use aosp-atd to test without Google APIs.
                     systemImageSource = "google-atd"
-                    apiLevel = 33
+                    apiLevel = 34
                 }
             }
         }
