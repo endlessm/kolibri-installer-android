@@ -7,7 +7,7 @@ else
 endif
 
 ANDROID_HOME ?= $(HOME)/.android/sdk
-ANDROID_API := 33
+ANDROID_API := 34
 
 ADB := adb
 DOCKER := docker
