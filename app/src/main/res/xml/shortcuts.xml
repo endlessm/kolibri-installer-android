@@ -1,0 +1,13 @@
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="settings"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_menu_preferences"
+        android:shortcutShortLabel="@string/settings_short_label"
+        android:shortcutLongLabel="@string/settings_long_label">
+        <intent
+            android:action="android.intent.action.MAIN"
+            android:targetPackage="org.endlessos.testapp"
+            android:targetClass="org.endlessos.testapp.SettingsActivity" />
+    </shortcut>
+</shortcuts>
